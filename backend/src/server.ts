@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-
+import relatorioRoutes from "./routes/relatorioRoutes.js";
 import empresaRoutes from "./routes/empresaRoutes.js";
 import obraRoutes from "./routes/obraRoutes.js";
 import cargaRoutes from "./routes/cargaRoutes.js";
@@ -11,6 +11,7 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/api/relatorios", relatorioRoutes);
 
 app.use("/api/empresas", empresaRoutes);
 app.use("/api/obras", obraRoutes);
