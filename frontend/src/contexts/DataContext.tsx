@@ -1,0 +1,5 @@
+import { createContext } from "react";
+import type { DataContextType } from "./DataContext.types";
+
+export const DataContext = createContext<DataContextType | undefined>(undefined);
+    

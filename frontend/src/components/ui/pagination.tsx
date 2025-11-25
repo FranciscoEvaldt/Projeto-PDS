@@ -67,6 +67,8 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  size: removed, // remove 'size' sem gerar variável utilizada
   ...props
 }: React.ComponentProps<typeof PaginationLink>) {
   return (
@@ -82,8 +84,12 @@ function PaginationPrevious({
   );
 }
 
+
+
 function PaginationNext({
   className,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  size: _removed,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) {
   return (
@@ -98,6 +104,7 @@ function PaginationNext({
     </PaginationLink>
   );
 }
+
 
 function PaginationEllipsis({
   className,

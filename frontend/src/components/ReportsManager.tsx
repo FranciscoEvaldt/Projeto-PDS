@@ -1,386 +1,257 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Download } from 'lucide-react';
-import { useStorage } from '../hooks/useStorage';
-import { toast } from 'sonner';
+import { FileText, Download } from 'lucide-react';
+import { useData } from '../contexts/useData';
+import { formatDateBR } from '../utils/DateHelpers';
+import { Packer } from 'docx';
+import { generateConcreteTestReport } from './DocxReportGenerator';
+import type { Load, Sample, Work } from '../types';
 
 export function ReportsManager() {
-  const { companies, works, loads, samples } = useStorage();
-  const [selectedWork, setSelectedWork] = useState('');
-  const [selectedLoad, setSelectedLoad] = useState('');
+  const { works, loads, samples } = useData();
+  const [selectedWork, setSelectedWork] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [generatingReport, setGeneratingReport] = useState<string | null>(null);
 
-  const generatePDF = () => {
-    if (!selectedLoad) {
-      toast.error('Selecione uma carga para gerar o relatório');
-      return;
+  const handleDownloadDocx = async (
+    key: string,
+    work: Work,
+    sheetLoads: Load[],
+    sheetSamples: Sample[]
+  ) => {
+    try {
+      setGeneratingReport(key);
+      
+      const docx = await generateConcreteTestReport(work, sheetLoads, sheetSamples);
+      const blob = await Packer.toBlob(docx);
+      
+      const idade = sheetSamples[0]?.idade_dias || '';
+      const idadeSuffix = idade ? `_${idade}dias` : '';
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Relatorio_${work.codigo}_Planilha_${sheetLoads[0].numero_planilha}${idadeSuffix}.docx`;
+      link.click();
+      
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erro ao gerar DOCX:', error);
+      alert('Erro ao gerar o relatório. Por favor, tente novamente.');
+    } finally {
+      setGeneratingReport(null);
     }
-
-    const load = loads.find(l => l.id === selectedLoad);
-    const work = works.find(w => w.id === load?.workId);
-    const company = companies.find(c => c.id === work?.companyId);
-    const loadSamples = samples.filter(s => s.loadId === selectedLoad);
-
-    if (!load || !work || !company) {
-      toast.error('Dados incompletos para geração do relatório');
-      return;
-    }
-
-    // Criar HTML do relatório
-    const reportHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Relatório de Ensaio - ${load.loadNumber}</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 40px;
-            max-width: 800px;
-            margin: 0 auto;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-          }
-          .header h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #333;
-          }
-          .section {
-            margin-bottom: 25px;
-          }
-          .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2563eb;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
-          }
-          .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-          }
-          .info-item {
-            padding: 8px;
-            background: #f9fafb;
-            border-radius: 4px;
-          }
-          .info-label {
-            font-weight: bold;
-            color: #666;
-            font-size: 12px;
-          }
-          .info-value {
-            color: #333;
-            font-size: 14px;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-          }
-          th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-          }
-          th {
-            background-color: #2563eb;
-            color: white;
-            font-weight: bold;
-          }
-          tr:nth-child(even) {
-            background-color: #f9fafb;
-          }
-          .approved {
-            color: #16a34a;
-            font-weight: bold;
-          }
-          .attention {
-            color: #ca8a04;
-            font-weight: bold;
-          }
-          .rejected {
-            color: #dc2626;
-            font-weight: bold;
-          }
-          .footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>RELATÓRIO DE ENSAIO DE COMPRESSÃO</h1>
-          <p>Laboratório de Concreto</p>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Dados da Empresa</div>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Empresa</div>
-              <div class="info-value">${company.name}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">CNPJ</div>
-              <div class="info-value">${company.cnpj}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Contato</div>
-              <div class="info-value">${company.contact}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Telefone</div>
-              <div class="info-value">${company.phone}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Dados da Obra</div>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Obra</div>
-              <div class="info-value">${work.name}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Responsável</div>
-              <div class="info-value">${work.responsible}</div>
-            </div>
-            <div class="info-item" style="grid-column: 1 / -1;">
-              <div class="info-label">Endereço</div>
-              <div class="info-value">${work.address}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Dados da Carga</div>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Número da Carga</div>
-              <div class="info-value">${load.loadNumber}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Nota Fiscal</div>
-              <div class="info-value">${load.invoiceNumber}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Data de Moldagem</div>
-              <div class="info-value">${new Date(load.deliveryDate).toLocaleDateString('pt-BR')}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">FCK (MPa)</div>
-              <div class="info-value">${load.fck}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Slump (mm)</div>
-              <div class="info-value">${load.slump}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Volume (m³)</div>
-              <div class="info-value">${load.volume}</div>
-            </div>
-            <div class="info-item" style="grid-column: 1 / -1;">
-              <div class="info-label">Fornecedor</div>
-              <div class="info-value">${work.supplier}</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Resultados dos Ensaios</div>
-          <table>
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Idade (dias)</th>
-                <th>Data do Ensaio</th>
-                <th>Resultado (MPa)</th>
-                <th>% do FCK</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${loadSamples.map(sample => {
-                const percentage = sample.result ? (sample.result / load.fck) * 100 : 0;
-                let statusClass = '';
-                let statusText = 'Pendente';
-                
-                if (sample.result) {
-                  if (percentage >= 100) {
-                    statusClass = 'approved';
-                    statusText = 'Aprovado';
-                  } else if (percentage >= 90) {
-                    statusClass = 'attention';
-                    statusText = 'Atenção';
-                  } else {
-                    statusClass = 'rejected';
-                    statusText = 'Reprovado';
-                  }
-                }
-
-                return `
-                  <tr>
-                    <td>${sample.code}</td>
-                    <td>${sample.age}</td>
-                    <td>${new Date(sample.testDate).toLocaleDateString('pt-BR')}</td>
-                    <td>${sample.result ? sample.result.toFixed(2) : '-'}</td>
-                    <td>${sample.result ? percentage.toFixed(1) + '%' : '-'}</td>
-                    <td class="${statusClass}">${statusText}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        ${loadSamples.some(s => s.observations) ? `
-          <div class="section">
-            <div class="section-title">Observações</div>
-            ${loadSamples.filter(s => s.observations).map(sample => `
-              <p><strong>${sample.code}:</strong> ${sample.observations}</p>
-            `).join('')}
-          </div>
-        ` : ''}
-
-        <div class="footer">
-          <p>Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
-          <p>Sistema de Gestão - Laboratório de Concreto</p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Criar blob e download
-    const blob = new Blob([reportHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Relatorio_${load.loadNumber.replace(/\//g, '-')}_${new Date().toISOString().split('T')[0]}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success('Relatório gerado com sucesso!');
   };
 
-  const filteredLoads = selectedWork 
-    ? loads.filter(l => l.workId === selectedWork)
-    : loads;
+  const getAvailableMonths = () => {
+    const monthsSet = new Set<string>();
+    loads.forEach(load => {
+      if (load.data_moldagem) {
+        const date = new Date(load.data_moldagem + 'T00:00:00');
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthsSet.add(monthKey);
+      }
+    });
+    return Array.from(monthsSet).sort().reverse();
+  };
+
+  const availableMonths = getAvailableMonths();
+
+  const formatMonthLabel = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    const monthNames = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    return `${monthNames[parseInt(month) - 1]} ${year}`;
+  };
+
+  const filteredLoads = loads.filter(load => {
+    const matchesWork = selectedWork === 'all' || load.obra_id === Number(selectedWork);
+    if (!matchesWork) return false;
+    if (selectedMonth === 'all') return true;
+    if (!load.data_moldagem) return false;
+
+    const date = new Date(load.data_moldagem + 'T00:00:00');
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    return monthKey === selectedMonth;
+  });
+
+  const loadsBySheet = filteredLoads.reduce((acc, load) => {
+    const key = `${load.obra_id}-${load.numero_planilha}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(load);
+    return acc;
+  }, {} as Record<string, typeof loads>);
+
+  const getSamplesBySheetAndAge = (sheetLoads: typeof loads) => {
+    const sheetSamples = samples.filter(s => 
+      sheetLoads.some(load => load.id === s.carga_id)
+    );
+
+    const byAge = sheetSamples.reduce((acc, sample) => {
+      const age = sample.idade_dias;
+      if (!acc[age]) acc[age] = [];
+      acc[age].push(sample);
+      return acc;
+    }, {} as Record<number, typeof samples>);
+
+    return byAge;
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Emitir Relatório em PDF</CardTitle>
-        <CardDescription>Emita relatórios técnicos em formato HTML para impressão ou PDF</CardDescription>
+        <CardTitle>Geração de Relatórios Técnicos</CardTitle>
+        <CardDescription>
+          Gere relatórios de ensaio em Word (.docx) - editável após geração
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="work">Selecione a Obra</Label>
-              <Select value={selectedWork} onValueChange={(value) => {
-                setSelectedWork(value);
-                setSelectedLoad('');
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma obra" />
-                </SelectTrigger>
-                <SelectContent>
-                  {works.map((work) => {
-                    const company = companies.find(c => c.id === work.companyId);
-                    return (
-                      <SelectItem key={work.id} value={work.id}>
-                        {work.name} ({company?.name})
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="load">Selecione o Relatório</Label>
-              <Select 
-                value={selectedLoad} 
-                onValueChange={setSelectedLoad}
-                disabled={!selectedWork}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um relatório" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredLoads.map((load) => {
-                    const loadSamples = samples.filter(s => s.loadId === load.id);
-                    const completedSamples = loadSamples.filter(s => s.result).length;
-                    return (
-                      <SelectItem key={load.id} value={load.id}>
-                        {load.loadNumber} - FCK {load.fck} MPa ({completedSamples}/{loadSamples.length} ensaios)
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Filtros */}
+        <div className="mb-6 flex gap-4">
+          <div className="flex-1">
+            <label className="text-sm mb-2 block">Filtrar por Obra</label>
+            <Select value={selectedWork} onValueChange={setSelectedWork}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas as obras" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as obras</SelectItem>
+                {works.map(work => (
+                  <SelectItem key={work.id} value={work.id.toString()}>
+                    {work.codigo} - {work.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {selectedLoad && (
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <h3 className="text-gray-900 mb-3">Resumo do Relatório</h3>
-              {(() => {
-                const load = loads.find(l => l.id === selectedLoad);
-                const work = works.find(w => w.id === load?.workId);
-                const company = companies.find(c => c.id === work?.companyId);
-                const loadSamples = samples.filter(s => s.loadId === selectedLoad);
-                const completedSamples = loadSamples.filter(s => s.result);
-
-                return (
-                  <div className="space-y-2 text-sm">
-                    <p><span className="text-gray-600">Empresa:</span> {company?.name}</p>
-                    <p><span className="text-gray-600">Obra:</span> {work?.name}</p>
-                    <p><span className="text-gray-600">Relatório:</span> {load?.loadNumber}</p>
-                    <p><span className="text-gray-600">FCK:</span> {load?.fck} MPa</p>
-                    <p><span className="text-gray-600">Amostras:</span> {loadSamples.length} total ({completedSamples.length} com resultado)</p>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          <Button 
-            onClick={generatePDF} 
-            disabled={!selectedLoad}
-            className="w-full"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Gerar Relatório (HTML)
-          </Button>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-            <p className="text-blue-900">
-              <strong>Dica:</strong> O relatório será gerado em formato HTML. 
-              Você pode abrir o arquivo em seu navegador e usar a função "Imprimir" 
-              (Ctrl+P) para salvar como PDF ou imprimir diretamente.
-            </p>
+          <div className="flex-1">
+            <label className="text-sm mb-2 block">Filtrar por Período</label>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">📅 Todos os períodos</SelectItem>
+                {availableMonths.map(monthKey => (
+                  <SelectItem key={monthKey} value={monthKey}>
+                    {formatMonthLabel(monthKey)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
+
+        {/* Lista de Planilhas */}
+        {Object.keys(loadsBySheet).length === 0 ? (
+          <div className="text-center py-8 text-gray-600">
+            <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+            <p>Nenhuma planilha encontrada com os filtros selecionados.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(loadsBySheet).map(([key, sheetLoads]) => {
+              const work = works.find(w => w.id === sheetLoads[0].obra_id);
+              if (!work) return null; // garante que work existe
+
+              const samplesByAge = getSamplesBySheetAndAge(sheetLoads);
+              const ages = Object.keys(samplesByAge).map(Number).sort((a, b) => a - b);
+
+              return (
+                <div key={key} className="space-y-3">
+                  {/* Cabeçalho da Planilha */}
+                  <Card className="border-2 border-blue-200 bg-blue-50">
+                    <CardContent className="pt-4 pb-4">
+                      <h3 className="font-semibold text-lg mb-1">{work.nome}</h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Planilha #{sheetLoads[0].numero_planilha} • {work.codigo} • {sheetLoads.length} carga(s)
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Cards por Idade de Rompimento */}
+                  <div className="ml-6 space-y-3">
+                    {ages.map(age => {
+                      const ageSamples = samplesByAge[age];
+                      const testedSamples = ageSamples.filter(s => s.resistencia_mpa);
+                      const allTested = ageSamples.length > 0 && ageSamples.length === testedSamples.length;
+                      const pdfKey = `${key}-${age}`;
+
+                      return (
+                        <Card key={age} className="border">
+                          <CardContent className="pt-4 pb-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h4 className="font-semibold">Relatório {age} dias</h4>
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                    allTested ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                  }`}>
+                                    {testedSamples.length}/{ageSamples.length} ensaiadas
+                                  </span>
+                                </div>
+
+                                <div className="text-sm space-y-1">
+                                  <div>
+                                    <span className="text-gray-600">Amostras:</span>
+                                    <span className="ml-2 font-mono">{ageSamples.map(s => s.numero_laboratorio).join(', ')}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">Data prevista de rompimento:</span>
+                                    <span className="ml-2 font-medium">{formatDateBR(ageSamples[0].data_prevista_rompimento)}</span>
+                                  </div>
+                                  {allTested && (
+                                    <div>
+                                      <span className="text-gray-600">Resistência média:</span>
+                                      <span className="ml-2 font-medium text-green-700">
+                                        {(ageSamples.reduce((sum, s) => sum + (s.resistencia_mpa || 0), 0) / ageSamples.length).toFixed(1)} MPa
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {!allTested && (
+                                  <div className="mt-2 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded inline-block">
+                                    ⚠️ Aguardando rompimento das amostras
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="ml-4">
+                                {allTested ? (
+                                  <div className="flex gap-2">
+                                    <Button
+                                     onClick={() => handleDownloadDocx(pdfKey, work as Work, sheetLoads, ageSamples)}
+                                      disabled={generatingReport === pdfKey}
+                                      size="sm"
+                                    >
+                                      <Download className="w-4 h-4 mr-2" />
+                                      {generatingReport === pdfKey ? 'Gerando...' : 'Gerar DOCX'}
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button disabled variant="outline" size="sm">
+                                    <Download className="w-4 h-4 mr-2" />
+                                    DOCX Bloqueado
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
