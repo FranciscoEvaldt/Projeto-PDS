@@ -1,11 +1,5 @@
 import type { Company, Work, Load, Sample } from '../types';
 
-// ⚙️ CONFIGURAÇÃO DO BACKEND
-// Altere a porta conforme seu backend:
-// - Porta 3001: 'http://localhost:3001/api' (padrão dos guias)
-// - Porta 3333: 'http://localhost:3333/api'
-// - Porta 5000: 'http://localhost:5000/api'
-// - Porta 3000: 'http://localhost:3000/api'
 const API_BASE_URL = 'http://localhost:3001/api';
 
 // Export para outros componentes usarem
@@ -107,15 +101,15 @@ Backend configurado: ${API_BASE_URL}
 // Companies API (tabela: empresa)
 export const companiesApi = {
   getAll: async (): Promise<Company[]> => {
-    return safeFetch<Company[]>(`${API_BASE_URL}/empresas`);
+    return safeFetch<Company[]>(`${API_BASE_URL}/companies`);
   },
 
   getById: async (id: number): Promise<Company> => {
-    return safeFetch<Company>(`${API_BASE_URL}/empresas/${id}`);
+    return safeFetch<Company>(`${API_BASE_URL}/companies/${id}`);
   },
 
   create: async (company: Omit<Company, 'id'>): Promise<Company> => {
-    return safeFetch<Company>(`${API_BASE_URL}/empresas`, {
+    return safeFetch<Company>(`${API_BASE_URL}/companies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(company),
@@ -123,7 +117,7 @@ export const companiesApi = {
   },
 
   update: async (id: number, company: Partial<Company>): Promise<Company> => {
-    return safeFetch<Company>(`${API_BASE_URL}/empresas/${id}`, {
+    return safeFetch<Company>(`${API_BASE_URL}/companies/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(company),
@@ -131,7 +125,7 @@ export const companiesApi = {
   },
 
   delete: async (id: number): Promise<void> => {
-    return safeFetch<void>(`${API_BASE_URL}/empresas/${id}`, {
+    return safeFetch<void>(`${API_BASE_URL}/companies/${id}`, {
       method: 'DELETE',
     });
   },
@@ -140,19 +134,19 @@ export const companiesApi = {
 // Works API (tabela: obra)
 export const worksApi = {
   getAll: async (): Promise<Work[]> => {
-    return safeFetch<Work[]>(`${API_BASE_URL}/obras`);
+    return safeFetch<Work[]>(`${API_BASE_URL}/works`);
   },
 
   getById: async (id: number): Promise<Work> => {
-    return safeFetch<Work>(`${API_BASE_URL}/obras/${id}`);
+    return safeFetch<Work>(`${API_BASE_URL}/works/${id}`);
   },
 
   getByCompany: async (empresaId: number): Promise<Work[]> => {
-    return safeFetch<Work[]>(`${API_BASE_URL}/obras?empresa_id=${empresaId}`);
+    return safeFetch<Work[]>(`${API_BASE_URL}/works?empresa_id=${empresaId}`);
   },
 
   create: async (work: Omit<Work, 'id'>): Promise<Work> => {
-    return safeFetch<Work>(`${API_BASE_URL}/obras`, {
+    return safeFetch<Work>(`${API_BASE_URL}/works`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(work),
@@ -160,7 +154,7 @@ export const worksApi = {
   },
 
   update: async (id: number, work: Partial<Work>): Promise<Work> => {
-    return safeFetch<Work>(`${API_BASE_URL}/obras/${id}`, {
+    return safeFetch<Work>(`${API_BASE_URL}/works/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(work),
@@ -168,7 +162,7 @@ export const worksApi = {
   },
 
   delete: async (id: number): Promise<void> => {
-    return safeFetch<void>(`${API_BASE_URL}/obras/${id}`, {
+    return safeFetch<void>(`${API_BASE_URL}/works/${id}`, {
       method: 'DELETE',
     });
   },
@@ -177,19 +171,19 @@ export const worksApi = {
 // Loads API (tabela: carga)
 export const loadsApi = {
   getAll: async (): Promise<Load[]> => {
-    return safeFetch<Load[]>(`${API_BASE_URL}/cargas`);
+    return safeFetch<Load[]>(`${API_BASE_URL}/loads`);
   },
 
   getById: async (id: number): Promise<Load> => {
-    return safeFetch<Load>(`${API_BASE_URL}/cargas/${id}`);
+    return safeFetch<Load>(`${API_BASE_URL}/loads/${id}`);
   },
 
   getByWork: async (obraId: number): Promise<Load[]> => {
-    return safeFetch<Load[]>(`${API_BASE_URL}/cargas?obra_id=${obraId}`);
+    return safeFetch<Load[]>(`${API_BASE_URL}/loads?obra_id=${obraId}`);
   },
 
   create: async (load: Omit<Load, 'id'>): Promise<Load> => {
-    return safeFetch<Load>(`${API_BASE_URL}/cargas`, {
+    return safeFetch<Load>(`${API_BASE_URL}/loads`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(load),
@@ -197,7 +191,7 @@ export const loadsApi = {
   },
 
   update: async (id: number, load: Partial<Load>): Promise<Load> => {
-    return safeFetch<Load>(`${API_BASE_URL}/cargas/${id}`, {
+    return safeFetch<Load>(`${API_BASE_URL}/loads/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(load),
@@ -205,7 +199,7 @@ export const loadsApi = {
   },
 
   delete: async (id: number): Promise<void> => {
-    return safeFetch<void>(`${API_BASE_URL}/cargas/${id}`, {
+    return safeFetch<void>(`${API_BASE_URL}/loads/${id}`, {
       method: 'DELETE',
     });
   },
@@ -214,19 +208,19 @@ export const loadsApi = {
 // Samples API (tabela: amostra)
 export const samplesApi = {
   getAll: async (): Promise<Sample[]> => {
-    return safeFetch<Sample[]>(`${API_BASE_URL}/amostras`);
+    return safeFetch<Sample[]>(`${API_BASE_URL}/samples`);
   },
 
   getById: async (id: number): Promise<Sample> => {
-    return safeFetch<Sample>(`${API_BASE_URL}/amostras/${id}`);
+    return safeFetch<Sample>(`${API_BASE_URL}/samples/${id}`);
   },
 
   getByLoad: async (cargaId: number): Promise<Sample[]> => {
-    return safeFetch<Sample[]>(`${API_BASE_URL}/amostras?carga_id=${cargaId}`);
+    return safeFetch<Sample[]>(`${API_BASE_URL}/samples?carga_id=${cargaId}`);
   },
 
   create: async (sample: Omit<Sample, 'id'>): Promise<Sample> => {
-    return safeFetch<Sample>(`${API_BASE_URL}/amostras`, {
+    return safeFetch<Sample>(`${API_BASE_URL}/samples`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sample),
@@ -234,7 +228,7 @@ export const samplesApi = {
   },
 
   update: async (id: number, sample: Partial<Sample>): Promise<Sample> => {
-    return safeFetch<Sample>(`${API_BASE_URL}/amostras/${id}`, {
+    return safeFetch<Sample>(`${API_BASE_URL}/samples/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sample),
@@ -242,13 +236,13 @@ export const samplesApi = {
   },
 
   delete: async (id: number): Promise<void> => {
-    return safeFetch<void>(`${API_BASE_URL}/amostras/${id}`, {
+    return safeFetch<void>(`${API_BASE_URL}/samples/${id}`, {
       method: 'DELETE',
     });
   },
 
   bulkCreate: async (samples: Omit<Sample, 'id'>[]): Promise<Sample[]> => {
-    return safeFetch<Sample[]>(`${API_BASE_URL}/amostras/bulk`, {
+    return safeFetch<Sample[]>(`${API_BASE_URL}/samples/bulk`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(samples),
