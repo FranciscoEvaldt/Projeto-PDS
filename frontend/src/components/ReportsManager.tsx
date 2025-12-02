@@ -33,7 +33,7 @@ export function ReportsManager() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Relatorio_${work.codigo}_Planilha_${sheetLoads[0].numero_planilha}${idadeSuffix}.docx`;
+      link.download = `Relatorio_${work.code}_Planilha_${sheetLoads[0].invoice_number}${idadeSuffix}.docx`;
       link.click();
       
       URL.revokeObjectURL(url);
@@ -48,8 +48,8 @@ export function ReportsManager() {
   const getAvailableMonths = () => {
     const monthsSet = new Set<string>();
     loads.forEach(load => {
-      if (load.data_moldagem) {
-        const date = new Date(load.data_moldagem + 'T00:00:00');
+      if (load.molding_date) {
+        const date = new Date(load.molding_date + 'T00:00:00');
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         monthsSet.add(monthKey);
       }
@@ -72,15 +72,15 @@ export function ReportsManager() {
     const matchesWork = selectedWork === 'all' || load.obra_id === Number(selectedWork);
     if (!matchesWork) return false;
     if (selectedMonth === 'all') return true;
-    if (!load.data_moldagem) return false;
+    if (!load.molding_date) return false;
 
-    const date = new Date(load.data_moldagem + 'T00:00:00');
+    const date = new Date(load.molding_date + 'T00:00:00');
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     return monthKey === selectedMonth;
   });
 
   const loadsBySheet = filteredLoads.reduce((acc, load) => {
-    const key = `${load.obra_id}-${load.numero_planilha}`;
+    const key = `${load.obra_id}-${load.molding_date}`;
     if (!acc[key]) acc[key] = [];
     acc[key].push(load);
     return acc;
@@ -122,7 +122,7 @@ export function ReportsManager() {
                 <SelectItem value="all">Todas as obras</SelectItem>
                 {works.map(work => (
                   <SelectItem key={work.id} value={work.id.toString()}>
-                    {work.codigo} - {work.nome}
+                    {work.code} - {work.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -167,9 +167,9 @@ export function ReportsManager() {
                   {/* Cabeçalho da Planilha */}
                   <Card className="border-2 border-blue-200 bg-blue-50">
                     <CardContent className="pt-4 pb-4">
-                      <h3 className="font-semibold text-lg mb-1">{work.nome}</h3>
+                      <h3 className="font-semibold text-lg mb-1">{work.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">
-                        Planilha #{sheetLoads[0].numero_planilha} • {work.codigo} • {sheetLoads.length} carga(s)
+                        Planilha #{sheetLoads[0].invoice_number} • {work.code} • {sheetLoads.length} carga(s)
                       </p>
                     </CardContent>
                   </Card>

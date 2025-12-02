@@ -1,283 +1,212 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Company, Work, Load, Sample } from '../types';
+import { toast } from 'sonner';
 
-// ============================================
-// 📦 TIPOS DE DADOS
-// ============================================
+const API_BASE_URL = 'http://localhost:3000/api';
 
-export interface Company {
-  id: string;
-  nome: string;
-  cnpj?: string;
-  contato?: string;
-  telefone?: string;
-  email?: string;
-  created_at?: string;
+// 🔧 Função genérica para requisições
+async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
+  try {
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(err || 'Erro na requisição');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
 }
 
-export interface Work {
-  id: string;
-  empresa_id: string;
-  empresa: string;
-  nome: string;
-  codigo: string;
-  endereco?: string;
-  contrato?: string;
-  status: 'active' | 'inactive';
-  created_at?: string;
-}
-
-export interface Load {
-  id: string;
-  obra_id: string;
-  numero_planilha: number;
-  caminhao: string;
-  nota_fiscal: string;
-  volume_m3: number;
-  fck_mpa: number;
-  slump?: number;
-  data_moldagem: string;
-  fornecedor_concreto?: string;
-  pavimento?: string;
-  peca?: string;
-  traco?: string;
-  quantidade_7_dias: number;
-  quantidade_14_dias: number;
-  quantidade_28_dias: number;
-  quantidade_63_dias: number;
-  created_at?: string;
-}
-
-export interface Sample {
-  id: string;
-  carga_id: string;
-  numero_laboratorio: string;
-  sequencia: string;
-  idade_dias: number;
-  data_prevista_rompimento: string;
-  data_rompimento?: string;
-  resistencia_mpa?: number;
-  observacoes?: string;
-  status: 'pendente' | 'testado';
-  created_at?: string;
-}
-
-// ============================================
-// 🔧 FUNÇÕES AUXILIARES
-// ============================================
-
-export function getNextPlanilhaNumber(loads: Load[], obraId: string): number {
-  const obraLoads = loads.filter(l => l.obra_id === obraId);
-  if (obraLoads.length === 0) return 1;
-  
-  const maxNumber = Math.max(...obraLoads.map(l => l.numero_planilha || 0));
-  return maxNumber + 1;
-}
-
-export function getNextLabNumber(samples: Sample[]): string {
-  if (samples.length === 0) return '1';
-  
-  const numbers = samples
-    .map(s => parseInt(s.numero_laboratorio))
-    .filter(n => !isNaN(n));
-  
-  if (numbers.length === 0) return '1';
-  
-  const maxNumber = Math.max(...numbers);
-  return String(maxNumber + 1);
-}
-
-// ============================================
-// 🎣 HOOK DE STORAGE (LocalStorage)
-// ============================================
-
-export function useStorage() {
+export const useStorage = () => {
+  // Estados globais
   const [companies, setCompanies] = useState<Company[]>([]);
   const [works, setWorks] = useState<Work[]>([]);
   const [loads, setLoads] = useState<Load[]>([]);
   const [samples, setSamples] = useState<Sample[]>([]);
 
-  // Carrega dados do localStorage ao iniciar
+  // Carrega tudo ao iniciar
   useEffect(() => {
-    const loadedCompanies = localStorage.getItem('companies');
-    const loadedWorks = localStorage.getItem('works');
-    const loadedLoads = localStorage.getItem('loads');
-    const loadedSamples = localStorage.getItem('samples');
-
-    if (loadedCompanies) setCompanies(JSON.parse(loadedCompanies));
-    if (loadedWorks) setWorks(JSON.parse(loadedWorks));
-    if (loadedLoads) setLoads(JSON.parse(loadedLoads));
-    if (loadedSamples) setSamples(JSON.parse(loadedSamples));
+    loadAll();
   }, []);
 
-  // Salva companies no localStorage
-  useEffect(() => {
-    localStorage.setItem('companies', JSON.stringify(companies));
-  }, [companies]);
+  const loadAll = async () => {
+    try {
+      const [c, w, l, s] = await Promise.all([
+        apiRequest<Company[]>(`${API_BASE_URL}/companies`),
+        apiRequest<Work[]>(`${API_BASE_URL}/works`),
+        apiRequest<Load[]>(`${API_BASE_URL}/loads`),
+        apiRequest<Sample[]>(`${API_BASE_URL}/samples`),
+      ]);
 
-  // Salva works no localStorage
-  useEffect(() => {
-    localStorage.setItem('works', JSON.stringify(works));
-  }, [works]);
+      setCompanies(c);
+      setWorks(w);
+      setLoads(l);
+      setSamples(s);
+    } catch {
+      toast.error('Erro ao carregar dados da API');
+    }
+  };
 
-  // Salva loads no localStorage
-  useEffect(() => {
-    localStorage.setItem('loads', JSON.stringify(loads));
-  }, [loads]);
+  // =====================================================================
+  // COMPANIES
+  // =====================================================================
 
-  // Salva samples no localStorage
-  useEffect(() => {
-    localStorage.setItem('samples', JSON.stringify(samples));
-  }, [samples]);
+  const addCompany = async (company: Omit<Company, 'id'>) => {
+    const newCompany = await apiRequest<Company>(
+      `${API_BASE_URL}/companies`,
+      { method: 'POST', body: JSON.stringify(company) }
+    );
 
-  // ============================================
-  // 🏢 COMPANIES (Empresas)
-  // ============================================
-
-  const addCompany = (company: Omit<Company, 'id' | 'created_at'>) => {
-    const newCompany: Company = {
-      ...company,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-    };
-    setCompanies([...companies, newCompany]);
+    setCompanies(prev => [...prev, newCompany]);
+    toast.success('Empresa criada!');
     return newCompany;
   };
 
-  const updateCompany = (id: string, updates: Partial<Company>) => {
-    setCompanies(companies.map(c => c.id === id ? { ...c, ...updates } : c));
+  const updateCompany = async (id: number, company: Partial<Company>) => {
+    const updated = await apiRequest<Company>(
+      `${API_BASE_URL}/companies/${id}`,
+      { method: 'PUT', body: JSON.stringify(company) }
+    );
+
+    setCompanies(prev => prev.map(c => (c.id === id ? updated : c)));
+    toast.success('Empresa atualizada!');
+    return updated;
   };
 
-  const deleteCompany = (id: string) => {
-    // Remove a empresa
-    setCompanies(companies.filter(c => c.id !== id));
-    
-    // Remove obras relacionadas e suas cargas/amostras
-    const relatedWorks = works.filter(w => w.empresa_id === id);
-    const relatedWorkIds = relatedWorks.map(w => w.id);
-    
-    setWorks(works.filter(w => w.empresa_id !== id));
-    
-    const relatedLoads = loads.filter(l => relatedWorkIds.includes(l.obra_id));
-    const relatedLoadIds = relatedLoads.map(l => l.id);
-    
-    setLoads(loads.filter(l => !relatedWorkIds.includes(l.obra_id)));
-    setSamples(samples.filter(s => !relatedLoadIds.includes(s.carga_id)));
+  const deleteCompany = async (id: number) => {
+    await apiRequest(`${API_BASE_URL}/companies/${id}`, { method: 'DELETE' });
+
+    setCompanies(prev => prev.filter(c => c.id !== id));
+    toast.success('Empresa removida!');
   };
 
-  // ============================================
-  // 🏗️ WORKS (Obras)
-  // ============================================
+  // =====================================================================
+  // WORKS
+  // =====================================================================
 
-  const addWork = (work: Omit<Work, 'id' | 'created_at'>) => {
-    const newWork: Work = {
-      ...work,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-    };
-    setWorks([...works, newWork]);
+  const addWork = async (work: Omit<Work, 'id'>) => {
+    const newWork = await apiRequest<Work>(
+      `${API_BASE_URL}/works`,
+      { method: 'POST', body: JSON.stringify(work) }
+    );
+
+    setWorks(prev => [...prev, newWork]);
+    toast.success('Obra criada!');
     return newWork;
   };
 
-  const updateWork = (id: string, updates: Partial<Work>) => {
-    setWorks(works.map(w => w.id === id ? { ...w, ...updates } : w));
+  const updateWork = async (id: number, work: Partial<Work>) => {
+    const updated = await apiRequest<Work>(
+      `${API_BASE_URL}/works/${id}`,
+      { method: 'PUT', body: JSON.stringify(work) }
+    );
+
+    setWorks(prev => prev.map(w => (w.id === id ? updated : w)));
+    toast.success('Obra atualizada!');
+    return updated;
   };
 
-  const deleteWork = (id: string) => {
-    // Remove a obra
-    setWorks(works.filter(w => w.id !== id));
-    
-    // Remove cargas relacionadas e suas amostras
-    const relatedLoads = loads.filter(l => l.obra_id === id);
-    const relatedLoadIds = relatedLoads.map(l => l.id);
-    
-    setLoads(loads.filter(l => l.obra_id !== id));
-    setSamples(samples.filter(s => !relatedLoadIds.includes(s.carga_id)));
+  const deleteWork = async (id: number) => {
+    await apiRequest(`${API_BASE_URL}/works/${id}`, { method: 'DELETE' });
+
+    setWorks(prev => prev.filter(w => w.id !== id));
+    toast.success('Obra removida!');
   };
 
-  // ============================================
-  // 📦 LOADS (Cargas/Planilhas)
-  // ============================================
+  // =====================================================================
+  // LOADS
+  // =====================================================================
 
-  const addLoad = (load: Omit<Load, 'id' | 'created_at'>) => {
-    const newLoad: Load = {
-      ...load,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-    };
-    setLoads([...loads, newLoad]);
+  const addLoad = async (load: Omit<Load, 'id'>) => {
+    const newLoad = await apiRequest<Load>(
+      `${API_BASE_URL}/loads`,
+      { method: 'POST', body: JSON.stringify(load) }
+    );
+
+    setLoads(prev => [...prev, newLoad]);
+    toast.success('Carga criada!');
     return newLoad;
   };
 
-  const updateLoad = (id: string, updates: Partial<Load>) => {
-    setLoads(loads.map(l => l.id === id ? { ...l, ...updates } : l));
+  const updateLoad = async (id: number, load: Partial<Load>) => {
+    const updated = await apiRequest<Load>(
+      `${API_BASE_URL}/loads/${id}`,
+      { method: 'PUT', body: JSON.stringify(load) }
+    );
+
+    setLoads(prev => prev.map(l => (l.id === id ? updated : l)));
+    toast.success('Carga atualizada!');
+    return updated;
   };
 
-  const deleteLoad = (id: string) => {
-    // Remove a carga
-    setLoads(loads.filter(l => l.id !== id));
-    
-    // Remove amostras relacionadas
-    setSamples(samples.filter(s => s.carga_id !== id));
+  const deleteLoad = async (id: number) => {
+    await apiRequest(`${API_BASE_URL}/loads/${id}`, { method: 'DELETE' });
+
+    setLoads(prev => prev.filter(l => l.id !== id));
+    toast.success('Carga removida!');
   };
 
-  // ============================================
-  // 🧪 SAMPLES (Amostras)
-  // ============================================
+  // =====================================================================
+  // SAMPLES
+  // =====================================================================
 
-  const addSample = (sample: Omit<Sample, 'id' | 'created_at'>) => {
-    const newSample: Sample = {
-      ...sample,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-    };
-    setSamples([...samples, newSample]);
+  const addSample = async (sample: Omit<Sample, 'id'>) => {
+    const newSample = await apiRequest<Sample>(
+      `${API_BASE_URL}/samples`,
+      { method: 'POST', body: JSON.stringify(sample) }
+    );
+
+    setSamples(prev => [...prev, newSample]);
+    toast.success('Amostra criada!');
     return newSample;
   };
 
-  const addSamplesBulk = (newSamples: Omit<Sample, 'id' | 'created_at'>[]) => {
-    const samplesWithIds = newSamples.map(s => ({
-      ...s,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-    }));
-    setSamples([...samples, ...samplesWithIds]);
-    return samplesWithIds;
+  const updateSample = async (id: number, sample: Partial<Sample>) => {
+    const updated = await apiRequest<Sample>(
+      `${API_BASE_URL}/samples/${id}`,
+      { method: 'PUT', body: JSON.stringify(sample) }
+    );
+
+    setSamples(prev => prev.map(s => (s.id === id ? updated : s)));
+    toast.success('Amostra atualizada!');
+    return updated;
   };
 
-  const updateSample = (id: string, updates: Partial<Sample>) => {
-    setSamples(samples.map(s => s.id === id ? { ...s, ...updates } : s));
+  const deleteSample = async (id: number) => {
+    await apiRequest(`${API_BASE_URL}/samples/${id}`, { method: 'DELETE' });
+
+    setSamples(prev => prev.filter(s => s.id !== id));
+    toast.success('Amostra removida!');
   };
 
-  const deleteSample = (id: string) => {
-    setSamples(samples.filter(s => s.id !== id));
-  };
-
+  // Return do hook
   return {
-    // Data
     companies,
     works,
     loads,
     samples,
-    
-    // Companies
+
     addCompany,
     updateCompany,
     deleteCompany,
-    
-    // Works
+
     addWork,
     updateWork,
     deleteWork,
-    
-    // Loads
+
     addLoad,
     updateLoad,
     deleteLoad,
-    
-    // Samples
+
     addSample,
-    addSamplesBulk,
     updateSample,
     deleteSample,
   };
-}
+};

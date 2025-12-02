@@ -19,7 +19,7 @@ export function generateConcreteTestReport(
   samples: Sample[]
 ) {
   const reportNumber = `${new Date().getFullYear()}/${
-    loads[0]?.numero_planilha?.toString().padStart(2, "0") || "01"
+    loads[0]?.invoice_number?.toString().padStart(2, "0") || "01"
   }`;
   const firstLoad = loads[0];
   const lastSample = samples.sort(
@@ -203,7 +203,7 @@ export function generateConcreteTestReport(
       children: [
         new TextRun({ text: "Endereço: ", bold: true, size: 18 }),
         new TextRun({
-          text: work.endereco || "Não informado",
+          text: work.address || "Não informado",
           color: "CC0000",
           italics: true,
           size: 18,
@@ -313,7 +313,7 @@ export function generateConcreteTestReport(
       children: [
         new TextRun({ text: "Data de recebimento: ", bold: true, size: 18 }),
         new TextRun({
-          text: formatDate(firstLoad?.data_moldagem),
+          text: formatDate(firstLoad?.molding_date),
           color: "CC0000",
           italics: true,
           size: 18,
@@ -329,7 +329,7 @@ export function generateConcreteTestReport(
           size: 18,
         }),
         new TextRun({
-          text: `de ${formatDate(firstLoad?.data_moldagem)} até ${formatDate(
+          text: `de ${formatDate(firstLoad?.molding_date)} até ${formatDate(
             lastSample?.data_prevista_rompimento
           )}`,
           color: "CC0000",
@@ -375,7 +375,7 @@ export function generateConcreteTestReport(
       children: [
         new TextRun({ text: "4. Objetivo: ", bold: true, size: 18 }),
         new TextRun({
-          text: `ensaio de compressão de corpos de prova cilíndricos normais de concreto, identificados no Quadro ${work.codigo}.`,
+          text: `ensaio de compressão de corpos de prova cilíndricos normais de concreto, identificados no Quadro ${work.code}.`,
           color: "CC0000",
           italics: true,
           size: 18,
@@ -390,7 +390,7 @@ export function generateConcreteTestReport(
     new Paragraph({
       children: [
         new TextRun({
-          text: `As amostras analisadas são corpos de prova cilíndricos de concreto, com dimensões aproximadas de 100 mm de diâmetro por 200 mm de altura. A coleta do concreto e a moldagem dos corpos de prova foram realizadas pelo cliente na obra "${work.nome}". Posteriormente, os exemplares foram encaminhados ao Laboratório Model Engenharia para a execução do ensaio de resistência à compressão, conforme os procedimentos estabelecidos na norma ABNT NBR 5739:2007. O experimento seguiu estritamente as determinações da norma referenciada, desde o preparo prévio das amostras até a realização do ensaio propriamente dito, concluindo com o registro detalhado de todos os dados obtidos.`,
+          text: `As amostras analisadas são corpos de prova cilíndricos de concreto, com dimensões aproximadas de 100 mm de diâmetro por 200 mm de altura. A coleta do concreto e a moldagem dos corpos de prova foram realizadas pelo cliente na obra "${work.name}". Posteriormente, os exemplares foram encaminhados ao Laboratório Model Engenharia para a execução do ensaio de resistência à compressão, conforme os procedimentos estabelecidos na norma ABNT NBR 5739:2007. O experimento seguiu estritamente as determinações da norma referenciada, desde o preparo prévio das amostras até a realização do ensaio propriamente dito, concluindo com o registro detalhado de todos os dados obtidos.`,
           size: 18,
         }),
       ],
@@ -423,7 +423,7 @@ export function generateConcreteTestReport(
       children: [
         new TextRun({ text: "Fornecedor de concreto: ", bold: true, size: 18 }),
         new TextRun({
-          text: firstLoad.fornecedor_concreto || "-",
+          text: firstLoad.concrete_type || "-",
           color: "CC0000",
           italics: true,
           size: 18,
@@ -435,7 +435,7 @@ export function generateConcreteTestReport(
       children: [
         new TextRun({ text: "Data de concretagem: ", bold: true, size: 18 }),
         new TextRun({
-          text: formatDate(firstLoad.data_moldagem),
+          text: formatDate(firstLoad.molding_date),
           color: "CC0000",
           italics: true,
           size: 18,
@@ -490,7 +490,7 @@ export function generateConcreteTestReport(
     new Paragraph({
       children: [
         new TextRun({
-          text: `Os resultados dos ensaios realizados estão apresentados no Quadro ${work.codigo}:`,
+          text: `Os resultados dos ensaios realizados estão apresentados no Quadro ${work.code}:`,
           size: 18,
         }),
       ],
@@ -731,7 +731,7 @@ export function generateConcreteTestReport(
     new Paragraph({
       children: [
         new TextRun({
-          text: `Quadro ${work.codigo} - Resultados dos ensaios de compressão axial`,
+          text: `Quadro ${work.code} - Resultados dos ensaios de compressão axial`,
           italics: true,
           size: 16,
         }),

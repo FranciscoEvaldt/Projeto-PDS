@@ -165,7 +165,7 @@ interface ConcreteTestReportProps {
 }
 
 export function ConcreteTestReport({ work, loads, samples }: ConcreteTestReportProps) {
-  const reportNumber = `${new Date().getFullYear()}/${loads[0]?.numero_planilha?.toString().padStart(2, '0') || '01'}`;
+  const reportNumber = `${new Date().getFullYear()}/${loads[0]?.invoice_number?.toString().padStart(2, '0') || '01'}`;
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr + 'T00:00:00');
@@ -218,7 +218,7 @@ export function ConcreteTestReport({ work, loads, samples }: ConcreteTestReportP
           </View>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Endereço: </Text>
-            <Text style={styles.fieldValue}>{work.endereco || 'Não informado'}</Text>
+            <Text style={styles.fieldValue}>{work.address || 'Não informado'}</Text>
           </View>
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Orçamento/contrato: </Text>
@@ -274,7 +274,7 @@ export function ConcreteTestReport({ work, loads, samples }: ConcreteTestReportP
                       <Text style={styles.col3}>{load?.volume_m3 || '-'}</Text>
                       <Text style={styles.col4}>{sample.numero_laboratorio}</Text>
                       <Text style={styles.col5}>{sample.idade_dias}</Text>
-                      <Text style={styles.col6}>{formatDate(load?.data_moldagem)}</Text>
+                      <Text style={styles.col6}>{formatDate(load?.molding_date)}</Text>
                       <Text style={styles.col7}>{formatDate(sample.data_prevista_rompimento)}</Text>
                       <Text style={styles.col8}>{peca}</Text>
                       <Text style={styles.col9}>100 x 200</Text>
@@ -291,7 +291,7 @@ export function ConcreteTestReport({ work, loads, samples }: ConcreteTestReportP
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
             4. Objetivo: <Text style={styles.fieldValue}>
-              ensaio de compressão de corpos de prova cilíndricos normais de concreto, identificados no Quadro {work.codigo}.
+              ensaio de compressão de corpos de prova cilíndricos normais de concreto, identificados no Quadro {work.code}.
             </Text>
           </Text>
         </View>
@@ -301,7 +301,7 @@ export function ConcreteTestReport({ work, loads, samples }: ConcreteTestReportP
           <Text style={styles.textBlock}>
             As amostras analisadas são corpos de prova cilíndricos de concreto, com dimensões aproximadas de 100 mm de
             diâmetro por 200 mm de altura. A coleta do concreto e a moldagem dos corpos de prova foram realizadas pelo cliente
-            na obra "{work.nome}". Posteriormente, os exemplares foram encaminhados ao Laboratório Model Engenharia para
+            na obra "{work.name}". Posteriormente, os exemplares foram encaminhados ao Laboratório Model Engenharia para
             a execução do ensaio de resistência à compressão, conforme os procedimentos estabelecidos na norma ABNT NBR
             5739:2018, e idade solicitada pelo contratante. No item 7, FG021, são apresentados os resultados e as demais
             informações referentes aos corpos de prova, conforme fornecidas pelo cliente.
@@ -415,7 +415,7 @@ export function ConcreteTestReport({ work, loads, samples }: ConcreteTestReportP
                   <Text style={styles.col3}>{load?.volume_m3 || '-'}</Text>
                   <Text style={styles.col4}>{sample.numero_laboratorio}</Text>
                   <Text style={styles.col5}>{sample.idade_dias}</Text>
-                  <Text style={styles.col6}>{formatDate(load?.data_moldagem)}</Text>
+                  <Text style={styles.col6}>{formatDate(load?.molding_date)}</Text>
                   <Text style={styles.col6}>
                     {sample.idade_dias} / {formatDate(sample.data_prevista_rompimento)}
                   </Text>

@@ -16,20 +16,20 @@ export function CompaniesManager() {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    nome: '',
+    name: '',
     cnpj: '',
-    endereco: '',
+    address: '',
     email: '',
-    telefone: '',
+    phone: '',
   });
 
   const resetForm = () => {
     setFormData({
-      nome: '',
+      name: '',
       cnpj: '',
-      endereco: '',
+      address: '',
       email: '',
-      telefone: '',
+      phone: '',
     });
     setEditingCompany(null);
   };
@@ -61,11 +61,11 @@ export function CompaniesManager() {
   const handleEdit = (company: Company) => {
     setEditingCompany(company);
     setFormData({
-      nome: company.nome,
+      name: company.name,
       cnpj: company.cnpj || '',
-      endereco: company.endereco || '',
+      address: company.address || '',
       email: company.email || '',
-      telefone: company.telefone || '',
+      phone: company.phone || '',
     });
     setIsDialogOpen(true);
   };
@@ -114,8 +114,8 @@ export function CompaniesManager() {
                     <Label htmlFor="nome">Nome da Empresa</Label>
                     <Input
                       id="nome"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
                     />
                   </div>
@@ -133,8 +133,8 @@ export function CompaniesManager() {
                       <Label htmlFor="telefone">Telefone</Label>
                       <Input
                         id="telefone"
-                        value={formData.telefone}
-                        onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="(00) 00000-0000"
                       />
                     </div>
@@ -143,8 +143,8 @@ export function CompaniesManager() {
                     <Label htmlFor="endereco">Endereço</Label>
                     <Input
                       id="endereco"
-                      value={formData.endereco}
-                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -187,11 +187,11 @@ export function CompaniesManager() {
             <TableBody>
               {companies.map((company) => (
                 <TableRow key={company.id}>
-                  <TableCell>{company.nome}</TableCell>
+                  <TableCell>{company.name}</TableCell>
                   <TableCell>{company.cnpj || '-'}</TableCell>
-                  <TableCell>{company.endereco || '-'}</TableCell>
+                  <TableCell>{company.address || '-'}</TableCell>
                   <TableCell>{company.email || '-'}</TableCell>
-                  <TableCell>{company.telefone || '-'}</TableCell>
+                  <TableCell>{company.phone || '-'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
                       <Button

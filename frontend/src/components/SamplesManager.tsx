@@ -105,8 +105,8 @@ export function SamplesManager() {
   const getAvailableMonths = () => {
     const monthsSet = new Set<string>();
     loads.forEach(load => {
-      if (load.data_moldagem) {
-        const date = new Date(load.data_moldagem + 'T00:00:00');
+      if (load.molding_date) {
+        const date = new Date(load.molding_date + 'T00:00:00');
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         monthsSet.add(monthKey);
       }
@@ -131,8 +131,8 @@ export function SamplesManager() {
     ? samples 
     : samples.filter(sample => {
         const load = loads.find(l => l.id === sample.carga_id);
-        if (!load || !load.data_moldagem) return false;
-        const date = new Date(load.data_moldagem + 'T00:00:00');
+        if (!load || !load.molding_date) return false;
+        const date = new Date(load.molding_date + 'T00:00:00');
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         return monthKey === selectedMonth;
       });
@@ -216,8 +216,8 @@ export function SamplesManager() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm">{work?.nome || 'N/A'}</span>
-                          <span className="text-xs text-blue-600">Planilha #{load?.numero_planilha || '-'}</span>
+                          <span className="text-sm">{work?.name || 'N/A'}</span>
+                          <span className="text-xs text-blue-600">Planilha #{load?.invoice_number || '-'}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">{load?.nota_fiscal || 'N/A'}</TableCell>
@@ -226,7 +226,7 @@ export function SamplesManager() {
                       <TableCell>{load?.pavimento || '-'}</TableCell>
                       <TableCell>{load?.peca || '-'}</TableCell>
                       <TableCell>{sample.idade_dias} dias</TableCell>
-                      <TableCell>{formatDateBR(load?.data_moldagem)}</TableCell>
+                      <TableCell>{formatDateBR(load?.molding_date)}</TableCell>
                       <TableCell>{formatDateBR(sample.data_prevista_rompimento)}</TableCell>
                       <TableCell>
                         {sample.resistencia_mpa ? (

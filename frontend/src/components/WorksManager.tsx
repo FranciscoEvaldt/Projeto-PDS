@@ -20,30 +20,30 @@ export function WorksManager() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     empresa_id: null as number | null,
-    codigo: '',
-    nome: '',
-    endereco: '',
+    code: '',
+    name: '',
+    address: '',
     cidade: '',
     estado: '',
     fck_projeto: '',
     responsavel_obra: '',
     contrato: '',
-    data_inicio: '',
+    start_date: '',
     status: 'active' as 'active' | 'completed' | 'paused',
   });
 
   const resetForm = () => {
     setFormData({
       empresa_id: null,
-      codigo: '',
-      nome: '',
-      endereco: '',
+      code: '',
+      name: '',
+      address: '',
       cidade: '',
       estado: '',
       fck_projeto: '',
       responsavel_obra: '',
       contrato: '',
-      data_inicio: '',
+      start_date: '',
       status: 'active',
     });
     setEditingWork(null);
@@ -57,7 +57,7 @@ export function WorksManager() {
       const dataToSubmit = {
         ...formData,
         fck_projeto: formData.fck_projeto ? parseFloat(formData.fck_projeto) : null,
-        data_inicio: formData.data_inicio || null,
+        data_inicio: formData.start_date || null,
       };
 
       if (editingWork) {
@@ -81,15 +81,15 @@ export function WorksManager() {
     setEditingWork(work);
     setFormData({
       empresa_id: work.empresa_id,
-      codigo: work.codigo || '',
-      nome: work.nome,
-      endereco: work.endereco || '',
+      code: work.code || '',
+      name: work.name,
+      address: work.address|| '',
       cidade: work.cidade || '',
       estado: work.estado || '',
       fck_projeto: work.fck_projeto ? work.fck_projeto.toString() : '',
       responsavel_obra: work.responsavel_obra || '',
       contrato: work.contrato || '',
-      data_inicio: work.data_inicio || '',
+      start_date: work.start_date || '',
       status: work.status as 'active' | 'completed' | 'paused',
     });
     setIsDialogOpen(true);
@@ -154,7 +154,7 @@ export function WorksManager() {
                       <SelectContent>
                         {companies.map((company) => (
                           <SelectItem key={company.id} value={company.id.toString()}>
-                            {company.nome}
+                            {company.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -166,8 +166,8 @@ export function WorksManager() {
                       <Label htmlFor="codigo">Código da Obra *</Label>
                       <Input
                         id="codigo"
-                        value={formData.codigo}
-                        onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                        value={formData.code}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                         placeholder="Ex: OB-001"
                         required
                       />
@@ -176,8 +176,8 @@ export function WorksManager() {
                       <Label htmlFor="nome">Nome da Obra *</Label>
                       <Input
                         id="nome"
-                        value={formData.nome}
-                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
                       />
                     </div>
@@ -187,8 +187,8 @@ export function WorksManager() {
                     <Label htmlFor="endereco">Endereço</Label>
                     <Input
                       id="endereco"
-                      value={formData.endereco}
-                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     />
                   </div>
 
@@ -250,8 +250,8 @@ export function WorksManager() {
                       <Input
                         id="data_inicio"
                         type="date"
-                        value={formData.data_inicio}
-                        onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+                        value={formData.start_date}
+                        onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -293,11 +293,11 @@ export function WorksManager() {
         ) : (
           <Accordion type="multiple" className="w-full">
             {worksByCompany.map(({ company, works: companyWorks }) => (
-              <AccordionItem key={company.id} value={company.id}>
+              <AccordionItem key={company.id} value={String(company.id)}>
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3 flex-1">
                     <Building2 className="w-5 h-5 text-blue-600" />
-                    <span>{company.nome}</span>
+                    <span>{company.name}</span>
                     <Badge variant="secondary" className="ml-2">
                       {companyWorks.length} {companyWorks.length === 1 ? 'obra' : 'obras'}
                     </Badge>
@@ -330,13 +330,13 @@ export function WorksManager() {
                             <TableRow key={work.id}>
                               <TableCell>
                                 <span className="font-mono text-sm font-semibold text-blue-600">
-                                  {work.codigo || '-'}
+                                  {work.code || '-'}
                                 </span>
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <FolderOpen className="w-4 h-4 text-amber-600" />
-                                  <span>{work.nome}</span>
+                                  <span>{work.name}</span>
                                 </div>
                               </TableCell>
                               <TableCell>

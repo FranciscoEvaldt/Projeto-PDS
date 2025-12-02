@@ -25,11 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "./ui/accordion";
 import { Badge } from "./ui/badge";
 import { Plus, Pencil, Trash2, Truck, FileText } from "lucide-react";
@@ -255,16 +251,17 @@ export function LoadsManager() {
       const promises = formData.loads.map(async (loadData) => {
         const loadPayload = {
           obra_id: Number(selectedWorkId),
-          numero_planilha: numeroPlanilha,
+          invoice_number: numeroPlanilha,
           caminhao: loadData.invoiceNumber,
           nota_fiscal: loadData.invoiceNumber,
-          data_moldagem: loadData.deliveryDate,
+          molding_date: loadData.deliveryDate,
           fck_mpa: Number(loadData.fck),
           slump_cm: Number(loadData.slump),
           volume_m3: Number(loadData.volume),
           pavimento: loadData.pavimento || null,
           peca: loadData.peca || null,
           observacoes: null,
+          concrete_type: null,
         };
 
         const newLoad = await addLoad(loadPayload);
@@ -285,7 +282,7 @@ export function LoadsManager() {
 
       const obra = works.find((w) => w.id === Number(selectedWorkId));
       toast.success(
-        `Planilha #${numeroPlanilha} criada com ${formData.loads.length} carga(s) para ${obra?.nome}!`
+        `Planilha #${numeroPlanilha} criada com ${formData.loads.length} carga(s) para ${obra?.name}!`
       );
     } catch (error: unknown) {
       console.error("Erro ao cadastrar planilhas:", error);
@@ -331,7 +328,7 @@ export function LoadsManager() {
           invoiceNumber: load.nota_fiscal || "",
           fck: load.fck_mpa?.toString() || "",
           slump: load.slump_cm?.toString() || "",
-          deliveryDate: load.data_moldagem,
+          deliveryDate: load.molding_date,
           volume: load.volume_m3?.toString() || "",
           pavimento: load.pavimento || "",
           peca: load.peca || "",
@@ -357,17 +354,17 @@ export function LoadsManager() {
       if (editingLoad) {
         const loadData = formData.loads[0];
 
-        let numeroPlanilha = editingLoad.numero_planilha;
+        let numeroPlanilha = editingLoad.invoice_number;
         if (Number(selectedWorkId) !== editingLoad.obra_id) {
           numeroPlanilha = getNextPlanilhaNumber(loads, Number(selectedWorkId));
         }
 
         await updateLoad(editingLoad.id, {
           obra_id: Number(selectedWorkId),
-          numero_planilha: numeroPlanilha,
+          invoice_number: numeroPlanilha,
           caminhao: loadData.invoiceNumber,
           nota_fiscal: loadData.invoiceNumber,
-          data_moldagem: loadData.deliveryDate,
+          molding_date: loadData.deliveryDate,
           fck_mpa: Number(loadData.fck),
           slump_cm: Number(loadData.slump),
           volume_m3: Number(loadData.volume),
@@ -402,14 +399,14 @@ export function LoadsManager() {
     const grouped: { [key: string]: GroupedPlanilha } = {};
 
     loads.forEach((load) => {
-      const key = `${load.obra_id}-${load.numero_planilha}`;
+      const key = `${load.obra_id}-${load.invoice_number}`;
 
       if (!grouped[key]) {
         const work = works.find((w) => w.id === load.obra_id);
         grouped[key] = {
           obra_id: load.obra_id,
-          numero_planilha: load.numero_planilha || 0,
-          obra_nome: work?.nome || "N/A",
+          numero_planilha: load.invoice_number || 0,
+          obra_nome: work?.name || "N/A",
           cargas: [],
           total_amostras: 0,
         };
@@ -447,8 +444,8 @@ export function LoadsManager() {
         const company = companies.find((c) => c.id === work?.empresa_id);
         grouped[key] = {
           obra_id: key,
-          obra_nome: work?.nome || "N/A",
-          empresa_nome: company?.nome || "Sem empresa",
+          obra_nome: work?.name || "N/A",
+          empresa_nome: company?.name || "Sem empresa",
           planilhas: [],
           total_cargas: 0,
           total_amostras: 0,
@@ -519,13 +516,13 @@ export function LoadsManager() {
                     const nextPlanilha =
                       workLoads.length > 0
                         ? Math.max(
-                            ...workLoads.map((l) => l.numero_planilha || 0)
+                            ...workLoads.map((l) => l.invoice_number || 0)
                           ) + 1
                         : 1;
 
                     return (
                       <SelectItem key={work.id} value={work.id.toString()}>
-                        {work.nome} ({company?.nome || "Sem empresa"}) - Próxima
+                        {work.name} ({company?.name || "Sem empresa"}) - Próxima
                         planilha: #{nextPlanilha}
                       </SelectItem>
                     );
@@ -536,7 +533,7 @@ export function LoadsManager() {
                 <p className="text-sm text-blue-700 mt-2">
                   ✅ Todas as planilhas cadastradas serão vinculadas a:{" "}
                   <strong>
-                    {works.find((w) => w.id === Number(selectedWorkId))?.nome}
+                    {works.find((w) => w.id === Number(selectedWorkId))?.name}
                   </strong>
                 </p>
               )}
@@ -579,7 +576,7 @@ export function LoadsManager() {
                   {editingLoad
                     ? "Edite os dados da carga de concreto"
                     : `Crie uma planilha com uma ou mais cargas (caminhões) para: ${
-                        works.find((w) => w.id === Number(selectedWorkId))?.nome
+                        works.find((w) => w.id === Number(selectedWorkId))?.name
                       }`}
                 </DialogDescription>
               </DialogHeader>
@@ -620,7 +617,7 @@ export function LoadsManager() {
                                   key={work.id}
                                   value={work.id.toString()}
                                 >
-                                  {work.nome} ({company?.nome || "Sem empresa"})
+                                  {work.name} ({company?.name || "Sem empresa"})
                                 </SelectItem>
                               );
                             })
@@ -651,7 +648,7 @@ export function LoadsManager() {
                         <strong>
                           {
                             works.find((w) => w.id === Number(selectedWorkId))
-                              ?.nome
+                              ?.name
                           }
                         </strong>
                       </p>
@@ -1041,7 +1038,7 @@ export function LoadsManager() {
                                             </p>
                                             <p className="text-gray-900">
                                               {formatDateBR(
-                                                carga.data_moldagem
+                                                carga.molding_date
                                               )}
                                             </p>
                                           </div>

@@ -275,7 +275,7 @@ export function Dashboard() {
                               )}
                             </p>
                             <p className="text-sm text-gray-600">
-                              {work?.nome} - Planilha #{load?.numero_planilha} - {sample.idade_dias} dias
+                              {work?.name} - Planilha #{load?.invoice_number} - {sample.idade_dias} dias
                             </p>
                           </div>
                           <Badge variant={selectedPeriod === "overdue" ? "destructive" : "outline"}>

@@ -1,6 +1,6 @@
 // types/index.ts
 // Tipos TypeScript para o Sistema de Gestão de Laboratório de Concreto
-// Interfaces fornecidas pelo usuário (schema real do banco)
+// Compatível com API real + PostgreSQL (IDs como string UUID)
 
 export interface Company {
   id: number;
@@ -8,11 +8,11 @@ export interface Company {
   cnpj: string;
   phone: string;
   email: string;
+  address?: string;
   created_at?: string;
   updated_at?: string;
-  created_by?: number;
-  updated_by?: number;
-  address?: string;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface Work {
@@ -30,8 +30,8 @@ export interface Work {
   status: 'active' | 'inactive' | 'completed' | 'paused';
   created_at?: string;
   updated_at?: string;
-  created_by?: number;
-  updated_by?: number;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface Load {
@@ -50,13 +50,13 @@ export interface Load {
   observacoes: string | null;
   created_at?: string;
   updated_at?: string;
-  created_by?: number;
-  updated_by?: number;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface Sample {
   id: number;
-  carga_id: number;
+  carga_id: number; // importante! string, não number
   sequencia: number;
   numero_laboratorio: number;
   data_prevista_rompimento: string;
@@ -71,12 +71,12 @@ export interface Sample {
   observacoes: string;
   created_at?: string;
   updated_at?: string;
-  created_by?: number;
-  updated_by?: number;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: 'admin' | 'user' | 'viewer';
@@ -89,7 +89,6 @@ export function getNextPlanilhaNumber(loads: Load[], workId: number): number {
   const workLoads = loads.filter((load) => load.obra_id === workId);
   if (workLoads.length === 0) return 1;
 
-  // Nota: invoice_number é number, não numero_planilha
   const maxNumber = Math.max(...workLoads.map((load) => load.invoice_number));
   return maxNumber + 1;
 }

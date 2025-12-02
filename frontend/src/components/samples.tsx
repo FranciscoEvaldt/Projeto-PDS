@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { useStorage } from '../hooks/useStorage';
 
 export function SamplesManager() {
-  const { works, loads, samples, saveSamples } = useStorage();
+  const { works, loads, samples, updateSample } = useStorage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [resultData, setResultData] = useState({
@@ -36,31 +36,26 @@ export function SamplesManager() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedSample) return;
+ const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
 
-    const resultMPa = calculateResult(Number(resultData.kgf));
+  if (!selectedSample) return;
 
-    const updatedSamples = samples.map(s =>
-  s.id === selectedSample.id
-    ? {
-        ...s,
-        resistencia_mpa: resultMPa,
-        observacoes: resultData.observations,
-        data_rompimento: new Date().toISOString(),
-        status: 'testado'
-      }
-    : s
-);
-    
-    saveSamples(updatedSamples);
-    toast.success('Resultado registrado com sucesso!');
-    setIsDialogOpen(false);
-    setSelectedSample(null);
-    setResultData({ kgf: '', observations: '' });
-  };
+  const resultMPa = calculateResult(Number(resultData.kgf));
+
+  updateSample(selectedSample.id, {
+    resistencia_mpa: resultMPa,
+    observacoes: resultData.observations,
+    data_rompimento: new Date().toISOString(),
+    status: 'testado'
+  });
+
+  toast.success('Resultado registrado com sucesso!');
+  setIsDialogOpen(false);
+  setSelectedSample(null);
+  setResultData({ kgf: '', observations: '' });
+};
+
 
   const getComplianceStatus = (result: number, targetFck: number) => {
     const percentage = (result / targetFck) * 100;
@@ -109,8 +104,8 @@ export function SamplesManager() {
                 return (
                   <TableRow key={sample.id}>
                     <TableCell>{sample.numero_laboratorio}</TableCell>
-                    <TableCell>{work?.nome || 'N/A'}</TableCell>
-                    <TableCell>{load?.numero_planilha || 'N/A'}</TableCell>
+                    <TableCell>{work?.name || 'N/A'}</TableCell>
+                    <TableCell>{load?.invoice_number|| 'N/A'}</TableCell>
                     <TableCell>{load?.fck_mpa} MPa</TableCell>
                     <TableCell>{sample.idade_dias} dias</TableCell>
                     <TableCell>{new Date(sample.data_moldagem).toLocaleDateString('pt-BR')}</TableCell>
