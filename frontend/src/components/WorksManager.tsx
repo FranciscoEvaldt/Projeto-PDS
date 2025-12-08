@@ -1,49 +1,49 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { toast } from 'sonner';
+import { useData } from '../contexts/DataContext';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Badge } from './ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Plus, Pencil, Trash2, Building2, FolderOpen } from 'lucide-react';
-import type { Work } from '../types';
-import { toast } from 'sonner';
-import { useData } from '../contexts/useData';
+import { Badge } from './ui/badge';
+import { Plus, Pencil, Trash2, Building2, FolderOpen, MapPin, Calendar, FileText, User, Activity } from 'lucide-react';
+import { Work } from '../hooks/useApiStorage';
 
 export function WorksManager() {
-  const { companies, works, addWork, updateWork, deleteWork } = useData();
+  const { companies, works, createWork, updateWork, deleteWork } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<Work | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     empresa_id: null as number | null,
-    code: '',
-    name: '',
-    address: '',
+    codigo: '',
+    nome: '',
+    endereco: '',
     cidade: '',
     estado: '',
     fck_projeto: '',
     responsavel_obra: '',
     contrato: '',
-    start_date: '',
-    status: 'active' as 'active' | 'completed' | 'paused',
+    data_inicio: '',
+    status: 'active',
   });
 
   const resetForm = () => {
     setFormData({
       empresa_id: null,
-      code: '',
-      name: '',
-      address: '',
+      codigo: '',
+      nome: '',
+      endereco: '',
       cidade: '',
       estado: '',
       fck_projeto: '',
       responsavel_obra: '',
       contrato: '',
-      start_date: '',
+      data_inicio: '',
       status: 'active',
     });
     setEditingWork(null);
@@ -54,23 +54,38 @@ export function WorksManager() {
     setIsSubmitting(true);
     
     try {
+      // Validação: empresa_id é obrigatório
+      if (!formData.empresa_id) {
+        toast.error('Por favor, selecione uma empresa');
+        setIsSubmitting(false);
+        return;
+      }
+
       const dataToSubmit = {
-        ...formData,
-        fck_projeto: formData.fck_projeto ? parseFloat(formData.fck_projeto) : null,
-        data_inicio: formData.start_date || null,
+        empresa_id: formData.empresa_id,
+        codigo: formData.codigo || undefined,
+        nome: formData.nome,
+        endereco: formData.endereco || undefined,
+        cidade: formData.cidade || undefined,
+        estado: formData.estado || undefined,
+        fck_projeto: formData.fck_projeto ? parseFloat(formData.fck_projeto) : undefined,
+        responsavel_obra: formData.responsavel_obra || undefined,
+        contrato: formData.contrato || undefined,
+        data_inicio: formData.data_inicio || undefined,
+        status: formData.status || undefined,
       };
 
       if (editingWork) {
         await updateWork(editingWork.id, dataToSubmit);
         toast.success('Obra atualizada com sucesso!');
       } else {
-        await addWork(dataToSubmit);
+        await createWork(dataToSubmit);
         toast.success('Obra cadastrada com sucesso!');
       }
       
       setIsDialogOpen(false);
       resetForm();
-    } catch {
+    } catch (error) {
       // Error is already handled in useApiStorage with toast
     } finally {
       setIsSubmitting(false);
@@ -80,17 +95,17 @@ export function WorksManager() {
   const handleEdit = (work: Work) => {
     setEditingWork(work);
     setFormData({
-      empresa_id: work.empresa_id,
-      code: work.code || '',
-      name: work.name,
-      address: work.address|| '',
+      empresa_id: work.empresa_id ?? null,
+      codigo: work.codigo || '',
+      nome: work.nome,
+      endereco: work.endereco || '',
       cidade: work.cidade || '',
       estado: work.estado || '',
-      fck_projeto: work.fck_projeto ? work.fck_projeto.toString() : '',
+      fck_projeto: work.fck_projeto?.toString() || '',
       responsavel_obra: work.responsavel_obra || '',
       contrato: work.contrato || '',
-      start_date: work.start_date || '',
-      status: work.status as 'active' | 'completed' | 'paused',
+      data_inicio: work.data_inicio || '',
+      status: work.status || 'active',
     });
     setIsDialogOpen(true);
   };
@@ -100,7 +115,7 @@ export function WorksManager() {
       try {
         await deleteWork(id);
         toast.success('Obra excluída com sucesso!');
-      } catch {
+      } catch (error) {
         // Error is already handled in useApiStorage with toast
       }
     }
@@ -140,144 +155,253 @@ export function WorksManager() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="empresa_id">Empresa</Label>
-                    <Select
-                      value={formData.empresa_id?.toString() || ''}
-                      onValueChange={(value: string) => setFormData({ ...formData, empresa_id: parseInt(value) })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma empresa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {companies.map((company) => (
-                          <SelectItem key={company.id} value={company.id.toString()}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="codigo">Código da Obra *</Label>
-                      <Input
-                        id="codigo"
-                        value={formData.code}
-                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        placeholder="Ex: OB-001"
-                        required
-                      />
+                <div className="grid gap-6 py-4"> {/* Aumentei o gap de 4 para 6 */}
+                  {/* Alerta caso não haja empresas */}
+                  {companies.length === 0 && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        ⚠️ <strong>Nenhuma empresa cadastrada!</strong><br />
+                        Por favor, cadastre uma empresa primeiro na aba <strong>&quot;Empresas&quot;</strong> antes de criar uma obra.
+                      </p>
                     </div>
-                    <div className="grid gap-2 col-span-2">
-                      <Label htmlFor="nome">Nome da Obra *</Label>
-                      <Input
-                        id="nome"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
+                  )}
+
+                  {/* SEÇÃO: Informações Básicas */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <Building2 className="w-4 h-4 text-blue-600" />
+                      <h3 className="text-sm font-medium text-gray-700">Informações Básicas</h3>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="empresa_id" className="flex items-center gap-2">
+                          <Building2 className="w-3.5 h-3.5 text-gray-500" />
+                          Empresa *
+                        </Label>
+                        <Select
+                          value={formData.empresa_id?.toString() || ''}
+                          onValueChange={(value: string) => setFormData({ ...formData, empresa_id: value ? parseInt(value, 10) : null })}
+                          required
+                          disabled={companies.length === 0}
+                        >
+                          <SelectTrigger className={companies.length === 0 ? 'bg-gray-100' : ''}>
+                            <SelectValue placeholder={companies.length === 0 ? 'Nenhuma empresa cadastrada' : 'Selecione uma empresa'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companies.length === 0 ? (
+                              <div className="p-3 text-center text-sm text-gray-500">
+                                Cadastre uma empresa primeiro
+                              </div>
+                            ) : (
+                              companies.map((company) => (
+                                <SelectItem key={company.id} value={company.id.toString()}>
+                                  {company.nome}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="codigo" className="flex items-center gap-2">
+                            <FileText className="w-3.5 h-3.5 text-gray-500" />
+                            Código *
+                          </Label>
+                          <Input
+                            id="codigo"
+                            value={formData.codigo}
+                            onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                            placeholder="OB-001"
+                            className="font-mono"
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2 col-span-3">
+                          <Label htmlFor="nome" className="flex items-center gap-2">
+                            <FolderOpen className="w-3.5 h-3.5 text-gray-500" />
+                            Nome da Obra *
+                          </Label>
+                          <Input
+                            id="nome"
+                            value={formData.nome}
+                            onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                            placeholder="Ex: Edifício Residencial Solar"
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="endereco">Endereço</Label>
-                    <Input
-                      id="endereco"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    />
-                  </div>
+                  {/* SEÇÃO: Localização */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <MapPin className="w-4 h-4 text-blue-600" />
+                      <h3 className="text-sm font-medium text-gray-700">Localização</h3>
+                    </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2 col-span-2">
-                      <Label htmlFor="cidade">Cidade</Label>
-                      <Input
-                        id="cidade"
-                        value={formData.cidade}
-                        onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="estado">Estado</Label>
-                      <Input
-                        id="estado"
-                        value={formData.estado}
-                        onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                        placeholder="UF"
-                        maxLength={2}
-                      />
-                    </div>
-                  </div>
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="endereco" className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                          Endereço
+                        </Label>
+                        <Input
+                          id="endereco"
+                          value={formData.endereco}
+                          onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                          placeholder="Rua, número, bairro"
+                        />
+                      </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="fck_projeto">Fck Projeto (MPa)</Label>
-                      <Input
-                        id="fck_projeto"
-                        type="number"
-                        step="0.01"
-                        value={formData.fck_projeto}
-                        onChange={(e) => setFormData({ ...formData, fck_projeto: e.target.value })}
-                        placeholder="Ex: 25.0"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="contrato">Contrato</Label>
-                      <Input
-                        id="contrato"
-                        value={formData.contrato}
-                        onChange={(e) => setFormData({ ...formData, contrato: e.target.value })}
-                      />
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="grid gap-2 col-span-3">
+                          <Label htmlFor="cidade">Cidade</Label>
+                          <Input
+                            id="cidade"
+                            value={formData.cidade}
+                            onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                            placeholder="Ex: São Paulo"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="estado">UF</Label>
+                          <Input
+                            id="estado"
+                            value={formData.estado}
+                            onChange={(e) => setFormData({ ...formData, estado: e.target.value.toUpperCase() })}
+                            placeholder="SP"
+                            maxLength={2}
+                            className="uppercase text-center"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="responsavel_obra">Responsável pela Obra</Label>
-                    <Input
-                      id="responsavel_obra"
-                      value={formData.responsavel_obra}
-                      onChange={(e) => setFormData({ ...formData, responsavel_obra: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="data_inicio">Data de Início</Label>
-                      <Input
-                        id="data_inicio"
-                        type="date"
-                        value={formData.start_date}
-                        onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      />
+                  {/* SEÇÃO: Detalhes Técnicos e Administrativos */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b">
+                      <Activity className="w-4 h-4 text-blue-600" />
+                      <h3 className="text-sm font-medium text-gray-700">Detalhes Técnicos e Administrativos</h3>
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="status">Status da Obra *</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(value: 'active' | 'completed' | 'paused') => 
-                          setFormData({ ...formData, status: value })
-                        }
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">🟢 Ativa</SelectItem>
-                          <SelectItem value="paused">🟡 Pausada</SelectItem>
-                          <SelectItem value="completed">🔵 Concluída</SelectItem>
-                        </SelectContent>
-                      </Select>
+
+                    <div className="grid gap-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="fck_projeto" className="flex items-center gap-2">
+                            <Activity className="w-3.5 h-3.5 text-gray-500" />
+                            FCK do Projeto
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="fck_projeto"
+                              type="number"
+                              step="0.1"
+                              value={formData.fck_projeto}
+                              onChange={(e) => setFormData({ ...formData, fck_projeto: e.target.value })}
+                              placeholder="25.0"
+                              className="pr-12"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                              MPa
+                            </span>
+                          </div>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="responsavel_obra" className="flex items-center gap-2">
+                            <User className="w-3.5 h-3.5 text-gray-500" />
+                            Responsável
+                          </Label>
+                          <Input
+                            id="responsavel_obra"
+                            value={formData.responsavel_obra}
+                            onChange={(e) => setFormData({ ...formData, responsavel_obra: e.target.value })}
+                            placeholder="Nome do responsável"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="contrato" className="flex items-center gap-2">
+                            <FileText className="w-3.5 h-3.5 text-gray-500" />
+                            Nº Contrato
+                          </Label>
+                          <Input
+                            id="contrato"
+                            value={formData.contrato}
+                            onChange={(e) => setFormData({ ...formData, contrato: e.target.value })}
+                            placeholder="CT-2024-001"
+                            className="font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="data_inicio" className="flex items-center gap-2">
+                            <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                            Data de Início
+                          </Label>
+                          <Input
+                            id="data_inicio"
+                            type="date"
+                            value={formData.data_inicio}
+                            onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="status" className="flex items-center gap-2">
+                            <Activity className="w-3.5 h-3.5 text-gray-500" />
+                            Status
+                          </Label>
+                          <Select
+                            value={formData.status}
+                            onValueChange={(value: string) => setFormData({ ...formData, status: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">
+                                <span className="flex items-center gap-2">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                  Ativa
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="inactive">
+                                <span className="flex items-center gap-2">
+                                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                                  Inativa
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                <span className="flex items-center gap-2">
+                                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                  Concluída
+                                </span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {editingWork ? 'Atualizar' : 'Cadastrar'}
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsDialogOpen(false);
+                      resetForm();
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting || companies.length === 0}>
+                    {isSubmitting ? 'Salvando...' : editingWork ? 'Atualizar Obra' : 'Cadastrar Obra'}
                   </Button>
                 </DialogFooter>
               </form>
@@ -288,16 +412,16 @@ export function WorksManager() {
       <CardContent>
         {works.length === 0 ? (
           <div className="text-center py-8 text-gray-600">
-            Nenhuma obra cadastrada. Clique em "Nova Obra" para começar.
+            Nenhuma obra cadastrada. Clique em &quot;Nova Obra&quot; para começar.
           </div>
         ) : (
           <Accordion type="multiple" className="w-full">
             {worksByCompany.map(({ company, works: companyWorks }) => (
-              <AccordionItem key={company.id} value={String(company.id)}>
+              <AccordionItem key={company.id} value={company.id.toString()}>
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3 flex-1">
                     <Building2 className="w-5 h-5 text-blue-600" />
-                    <span>{company.name}</span>
+                    <span>{company.nome}</span>
                     <Badge variant="secondary" className="ml-2">
                       {companyWorks.length} {companyWorks.length === 1 ? 'obra' : 'obras'}
                     </Badge>
@@ -310,47 +434,28 @@ export function WorksManager() {
                         <TableRow>
                           <TableHead>Código</TableHead>
                           <TableHead>Obra</TableHead>
-                          <TableHead>Status</TableHead>
                           <TableHead>Cidade/UF</TableHead>
-                          <TableHead>Fck Projeto</TableHead>
-                          <TableHead>Responsável</TableHead>
                           <TableHead className="text-right">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {companyWorks.map((work) => {
-                          const statusConfig = {
-                            active: { label: 'Ativa', variant: 'default' as const, icon: '🟢' },
-                            paused: { label: 'Pausada', variant: 'secondary' as const, icon: '🟡' },
-                            completed: { label: 'Concluída', variant: 'outline' as const, icon: '🔵' },
-                          };
-                          const status = statusConfig[work.status as 'active' | 'paused' | 'completed'] || statusConfig.active;
-                          
                           return (
                             <TableRow key={work.id}>
                               <TableCell>
                                 <span className="font-mono text-sm font-semibold text-blue-600">
-                                  {work.code || '-'}
+                                  {work.codigo || '-'}
                                 </span>
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <FolderOpen className="w-4 h-4 text-amber-600" />
-                                  <span>{work.name}</span>
+                                  <span>{work.nome}</span>
                                 </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={status.variant}>
-                                  {status.icon} {status.label}
-                                </Badge>
                               </TableCell>
                               <TableCell>
                                 {[work.cidade, work.estado].filter(Boolean).join(' / ') || '-'}
                               </TableCell>
-                              <TableCell>
-                                {work.fck_projeto ? `${work.fck_projeto} MPa` : '-'}
-                              </TableCell>
-                              <TableCell>{work.responsavel_obra || '-'}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex gap-2 justify-end">
                                   <Button

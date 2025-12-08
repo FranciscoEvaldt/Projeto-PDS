@@ -1,35 +1,35 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Company } from '../hooks/useApiStorage';
+import { toast } from 'sonner';
+import { useData } from '../contexts/DataContext';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { useData } from '../contexts/useData';
-import type { Company } from '../types';
-import { toast } from 'sonner';
+import { Plus, Pencil, Trash2} from 'lucide-react';
 
 export function CompaniesManager() {
-  const { companies, addCompany, updateCompany, deleteCompany } = useData();
+  const { companies, createCompany, updateCompany, deleteCompany } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    nome: '',
     cnpj: '',
-    address: '',
+    endereco: '',
     email: '',
-    phone: '',
+    telefone: '',
   });
 
   const resetForm = () => {
     setFormData({
-      name: '',
+      nome: '',
       cnpj: '',
-      address: '',
+      endereco: '',
       email: '',
-      phone: '',
+      telefone: '',
     });
     setEditingCompany(null);
   };
@@ -44,7 +44,7 @@ export function CompaniesManager() {
         await updateCompany(editingCompany.id, formData);
       } else {
         console.log('➕ Criando nova empresa com dados:', formData);
-        const created = await addCompany(formData);
+        const created = await createCompany(formData);
         console.log('✅ Empresa criada e retornada:', created);
       }
       
@@ -61,11 +61,11 @@ export function CompaniesManager() {
   const handleEdit = (company: Company) => {
     setEditingCompany(company);
     setFormData({
-      name: company.name,
+      nome: company.nome,
       cnpj: company.cnpj || '',
-      address: company.address || '',
+      endereco: company.endereco || '',
       email: company.email || '',
-      phone: company.phone || '',
+      telefone: company.telefone || '',
     });
     setIsDialogOpen(true);
   };
@@ -75,7 +75,7 @@ export function CompaniesManager() {
       try {
         await deleteCompany(id);
         toast.success('Empresa excluída com sucesso!');
-      } catch {
+      } catch (error) {
         // Error is already handled in useApiStorage with toast
       }
     }
@@ -114,8 +114,8 @@ export function CompaniesManager() {
                     <Label htmlFor="nome">Nome da Empresa</Label>
                     <Input
                       id="nome"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={formData.nome}
+                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                       required
                     />
                   </div>
@@ -133,8 +133,8 @@ export function CompaniesManager() {
                       <Label htmlFor="telefone">Telefone</Label>
                       <Input
                         id="telefone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        value={formData.telefone}
+                        onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                         placeholder="(00) 00000-0000"
                       />
                     </div>
@@ -143,8 +143,8 @@ export function CompaniesManager() {
                     <Label htmlFor="endereco">Endereço</Label>
                     <Input
                       id="endereco"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      value={formData.endereco}
+                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -187,11 +187,11 @@ export function CompaniesManager() {
             <TableBody>
               {companies.map((company) => (
                 <TableRow key={company.id}>
-                  <TableCell>{company.name}</TableCell>
+                  <TableCell>{company.nome}</TableCell>
                   <TableCell>{company.cnpj || '-'}</TableCell>
-                  <TableCell>{company.address || '-'}</TableCell>
+                  <TableCell>{company.endereco || '-'}</TableCell>
                   <TableCell>{company.email || '-'}</TableCell>
-                  <TableCell>{company.phone || '-'}</TableCell>
+                  <TableCell>{company.telefone || '-'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
                       <Button

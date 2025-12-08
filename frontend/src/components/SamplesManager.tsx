@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Sample } from '../../hooks/useApiStorage';
+import { toast } from 'sonner';
+import { formatDateBR } from '../utils/dateHelpers';
+import { useData } from '../contexts/DataContext';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { FlaskConical, Calendar } from 'lucide-react';
-import { useData } from '../contexts/useData';
-import { toast } from 'sonner';
-import { formatDateBR } from '../utils/DateHelpers';
-import type { Sample } from '../types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Badge } from './ui/badge';
+import { FlaskConical, Calendar, Pencil, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 export function SamplesManager() {
   const { works, loads, samples, updateSample } = useData();
@@ -21,8 +21,15 @@ export function SamplesManager() {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [resultData, setResultData] = useState({
     result: '',
-    observations: '',
+    kgf: '',
   });
+
+  // Função para calcular MPa a partir de kgf
+  const calculateResult = (kgf: number) => {
+    const gravidade = 10;
+    const area = 7.854;
+    return (kgf * gravidade) / area;
+  };
 
   // Debug: Log para verificar dados
   console.log('🔍 SamplesManager Debug:', {
@@ -43,52 +50,38 @@ export function SamplesManager() {
     })),
   });
 
-   const calculateResult = (kgf: number) => {
-    const gravidade = 10;
-    const area = 7.854;
-    return (kgf * gravidade) / area;
+  const handleRegisterResult = (sample: Sample) => {
+    setSelectedSample(sample);
+    setResultData({
+      result: sample.resistencia_mpa?.toString() || '',
+      kgf: '',
+    });
+    setIsDialogOpen(true);
   };
 
-  const handleRegisterResult = (sample: Sample) => {
-  setSelectedSample(sample);
-
-  setResultData({
-    result: sample.resistencia_mpa
-      ? (sample.resistencia_mpa * 7.854 / 10).toFixed(2)
-      : '',
-    observations: sample.observacoes || '',
-  });
-
-  setIsDialogOpen(true);
-};
-
-
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  
-  if (!selectedSample) return;
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    if (!selectedSample) return;
 
-  try {
-    const resultMPa = calculateResult(Number(resultData.result));
-
-    await updateSample(selectedSample.id, {
-      resistencia_mpa: resultMPa,
-      observacoes: resultData.observations,
-      data_rompimento: new Date().toISOString().split("T")[0],
-      status: "testado",
-    });
-
-    toast.success("Resultado registrado com sucesso!");
-    setIsDialogOpen(false);
-    setSelectedSample(null);
-    setResultData({ result: "", observations: "" });
-
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+    try {
+      await updateSample(selectedSample.id, {
+        resistencia_mpa: Number(resultData.result),
+        data_rompimento: new Date().toISOString().split('T')[0],
+        status: 'tested',
+      });
+      
+      toast.success('Resultado registrado com sucesso!');
+      setIsDialogOpen(false);
+      setSelectedSample(null);
+      setResultData({ result: '', kgf: '' });
+    } catch (error) {
+      // Error is already handled in useApiStorage with toast
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const getComplianceStatus = (result: number, targetFck: number) => {
     const percentage = (result / targetFck) * 100;
@@ -105,8 +98,8 @@ export function SamplesManager() {
   const getAvailableMonths = () => {
     const monthsSet = new Set<string>();
     loads.forEach(load => {
-      if (load.molding_date) {
-        const date = new Date(load.molding_date + 'T00:00:00');
+      if (load.data_moldagem) {
+        const date = new Date(load.data_moldagem + 'T00:00:00');
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         monthsSet.add(monthKey);
       }
@@ -131,8 +124,8 @@ export function SamplesManager() {
     ? samples 
     : samples.filter(sample => {
         const load = loads.find(l => l.id === sample.carga_id);
-        if (!load || !load.molding_date) return false;
-        const date = new Date(load.molding_date + 'T00:00:00');
+        if (!load || !load.data_moldagem) return false;
+        const date = new Date(load.data_moldagem + 'T00:00:00');
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         return monthKey === selectedMonth;
       });
@@ -196,7 +189,7 @@ export function SamplesManager() {
                 {filteredSamples.map((sample) => {
                   const load = loads.find(l => l.id === sample.carga_id);
                   const work = works.find(w => w.id === load?.obra_id);
-                  const compliance = sample.resistencia_mpa && load?.fck_mpa ? getComplianceStatus(sample.resistencia_mpa, load.fck_mpa) : null;
+                  const compliance = sample.resistencia_mpa && load?.fck_mpa ? getComplianceStatus(Number(sample.resistencia_mpa), load.fck_mpa) : null;
 
                   // Debug: Log para cada amostra
                   if (!load) {
@@ -216,8 +209,8 @@ export function SamplesManager() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm">{work?.name || 'N/A'}</span>
-                          <span className="text-xs text-blue-600">Planilha #{load?.invoice_number || '-'}</span>
+                          <span className="text-sm">{work?.nome || 'N/A'}</span>
+                          <span className="text-xs text-blue-600">Planilha #{load?.numero_planilha || '-'}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-xs">{load?.nota_fiscal || 'N/A'}</TableCell>
@@ -226,12 +219,12 @@ export function SamplesManager() {
                       <TableCell>{load?.pavimento || '-'}</TableCell>
                       <TableCell>{load?.peca || '-'}</TableCell>
                       <TableCell>{sample.idade_dias} dias</TableCell>
-                      <TableCell>{formatDateBR(load?.molding_date)}</TableCell>
+                      <TableCell>{formatDateBR(load?.data_moldagem)}</TableCell>
                       <TableCell>{formatDateBR(sample.data_prevista_rompimento)}</TableCell>
                       <TableCell>
                         {sample.resistencia_mpa ? (
                           <span className={compliance?.color}>
-                            {sample.resistencia_mpa.toFixed(2)} MPa
+                            {Number(sample.resistencia_mpa).toFixed(2)} MPa
                           </span>
                         ) : (
                           <span className="text-gray-500">Pendente</span>
@@ -266,7 +259,27 @@ export function SamplesManager() {
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="result">Resistência à Compressão (MPa)</Label>
+                  <Label htmlFor="kgf">Carga de Ruptura (kgf)</Label>
+                  <Input
+                    id="kgf"
+                    type="number"
+                    step="0.01"
+                    value={resultData.kgf}
+                    onChange={(e) => {
+                      const kgfValue = parseFloat(e.target.value);
+                      setResultData({ 
+                        kgf: e.target.value, 
+                        result: kgfValue ? calculateResult(kgfValue).toFixed(2) : '' 
+                      });
+                    }}
+                    placeholder="Ex: 225.0"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Digite a carga de ruptura e o resultado em MPa será calculado automaticamente
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="result">Resistência à Compressão (MPa) *</Label>
                   <Input
                     id="result"
                     type="number"
@@ -281,16 +294,6 @@ export function SamplesManager() {
                       FCK esperado: {loads.find(l => l.id === selectedSample.carga_id)?.fck_mpa} MPa
                     </p>
                   )}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="observations">Observações</Label>
-                  <Textarea
-                    id="observations"
-                    value={resultData.observations}
-                    onChange={(e) => setResultData({ ...resultData, observations: e.target.value })}
-                    placeholder="Observações sobre o ensaio (opcional)"
-                    rows={4}
-                  />
                 </div>
               </div>
               <DialogFooter>

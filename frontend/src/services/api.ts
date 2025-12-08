@@ -1,5 +1,21 @@
 import type { Company, Work, Load, Sample } from '../types';
 
+// Tipo para User
+export interface User {
+  id: number;
+  username: string;
+  name: string;
+  role: 'admin' | 'user';
+  created_at?: string;
+}
+
+export interface AuthResponse {
+  id: number;
+  username: string;
+  name: string;
+  role: 'admin' | 'user';
+}
+
 const API_BASE_URL = 'http://localhost:3001/api';
 
 // Export para outros componentes usarem
@@ -80,12 +96,12 @@ URL tentada: ${url}
 
 Possíveis causas:
 1. Backend não está rodando
-2. Porta incorreta (verifique se é 3333, 5000 ou 3000)
+2. Porta incorreta (verifique se é 3001)
 3. CORS não configurado no backend
 
 Como resolver:
-1. Inicie o backend: cd backend && npm run dev
-2. Verifique a porta em /services/api.ts (linha 9)
+1. Inicie o backend: cd BACKEND_COMPLETO && npm run dev
+2. Verifique a porta em /services/api.ts
 3. Configure CORS no backend para aceitar requisições de http://localhost:5173
 
 Backend configurado: ${API_BASE_URL}
@@ -98,7 +114,7 @@ Backend configurado: ${API_BASE_URL}
   }
 }
 
-// Companies API (tabela: empresa)
+// Companies API
 export const companiesApi = {
   getAll: async (): Promise<Company[]> => {
     return safeFetch<Company[]>(`${API_BASE_URL}/companies`);
@@ -108,10 +124,9 @@ export const companiesApi = {
     return safeFetch<Company>(`${API_BASE_URL}/companies/${id}`);
   },
 
-  create: async (company: Omit<Company, 'id'>): Promise<Company> => {
+  create: async (company: Omit<Company, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>): Promise<Company> => {
     return safeFetch<Company>(`${API_BASE_URL}/companies`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(company),
     });
   },
@@ -119,7 +134,6 @@ export const companiesApi = {
   update: async (id: number, company: Partial<Company>): Promise<Company> => {
     return safeFetch<Company>(`${API_BASE_URL}/companies/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(company),
     });
   },
@@ -131,7 +145,7 @@ export const companiesApi = {
   },
 };
 
-// Works API (tabela: obra)
+// Works API
 export const worksApi = {
   getAll: async (): Promise<Work[]> => {
     return safeFetch<Work[]>(`${API_BASE_URL}/works`);
@@ -145,10 +159,9 @@ export const worksApi = {
     return safeFetch<Work[]>(`${API_BASE_URL}/works?empresa_id=${empresaId}`);
   },
 
-  create: async (work: Omit<Work, 'id'>): Promise<Work> => {
+  create: async (work: Omit<Work, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>): Promise<Work> => {
     return safeFetch<Work>(`${API_BASE_URL}/works`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(work),
     });
   },
@@ -156,7 +169,6 @@ export const worksApi = {
   update: async (id: number, work: Partial<Work>): Promise<Work> => {
     return safeFetch<Work>(`${API_BASE_URL}/works/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(work),
     });
   },
@@ -168,7 +180,7 @@ export const worksApi = {
   },
 };
 
-// Loads API (tabela: carga)
+// Loads API
 export const loadsApi = {
   getAll: async (): Promise<Load[]> => {
     return safeFetch<Load[]>(`${API_BASE_URL}/loads`);
@@ -182,10 +194,9 @@ export const loadsApi = {
     return safeFetch<Load[]>(`${API_BASE_URL}/loads?obra_id=${obraId}`);
   },
 
-  create: async (load: Omit<Load, 'id'>): Promise<Load> => {
+  create: async (load: Omit<Load, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>): Promise<Load> => {
     return safeFetch<Load>(`${API_BASE_URL}/loads`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(load),
     });
   },
@@ -193,7 +204,6 @@ export const loadsApi = {
   update: async (id: number, load: Partial<Load>): Promise<Load> => {
     return safeFetch<Load>(`${API_BASE_URL}/loads/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(load),
     });
   },
@@ -205,7 +215,7 @@ export const loadsApi = {
   },
 };
 
-// Samples API (tabela: amostra)
+// Samples API
 export const samplesApi = {
   getAll: async (): Promise<Sample[]> => {
     return safeFetch<Sample[]>(`${API_BASE_URL}/samples`);
@@ -219,10 +229,9 @@ export const samplesApi = {
     return safeFetch<Sample[]>(`${API_BASE_URL}/samples?carga_id=${cargaId}`);
   },
 
-  create: async (sample: Omit<Sample, 'id'>): Promise<Sample> => {
+  create: async (sample: Omit<Sample, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>): Promise<Sample> => {
     return safeFetch<Sample>(`${API_BASE_URL}/samples`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sample),
     });
   },
@@ -230,7 +239,6 @@ export const samplesApi = {
   update: async (id: number, sample: Partial<Sample>): Promise<Sample> => {
     return safeFetch<Sample>(`${API_BASE_URL}/samples/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sample),
     });
   },
@@ -241,11 +249,48 @@ export const samplesApi = {
     });
   },
 
-  bulkCreate: async (samples: Omit<Sample, 'id'>[]): Promise<Sample[]> => {
+  bulkCreate: async (samples: Omit<Sample, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by'>[]): Promise<Sample[]> => {
     return safeFetch<Sample[]>(`${API_BASE_URL}/samples/bulk`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(samples),
+    });
+  },
+};
+
+// Users API
+export const usersApi = {
+  getAll: async (): Promise<User[]> => {
+    return safeFetch<User[]>(`${API_BASE_URL}/users`);
+  },
+
+  getById: async (id: number): Promise<User> => {
+    return safeFetch<User>(`${API_BASE_URL}/users/${id}`);
+  },
+
+  authenticate: async (username: string, password: string): Promise<AuthResponse> => {
+    return safeFetch<AuthResponse>(`${API_BASE_URL}/users/authenticate`, {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+  },
+
+  create: async (user: { username: string; password: string; name: string; role: 'admin' | 'user' }): Promise<User> => {
+    return safeFetch<User>(`${API_BASE_URL}/users`, {
+      method: 'POST',
+      body: JSON.stringify(user),
+    });
+  },
+
+  update: async (id: number, user: { name?: string; role?: 'admin' | 'user' }): Promise<User> => {
+    return safeFetch<User>(`${API_BASE_URL}/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(user),
+    });
+  },
+
+  delete: async (id: number): Promise<void> => {
+    return safeFetch<void>(`${API_BASE_URL}/users/${id}`, {
+      method: 'DELETE',
     });
   },
 };

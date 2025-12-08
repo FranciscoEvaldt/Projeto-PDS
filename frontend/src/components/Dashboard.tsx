@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react";
-import { Badge } from "./ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
-import { Building2, Hammer, TestTube, AlertCircle, ArrowRight, AlertTriangle } from "lucide-react";
-import { useData } from "../contexts/useData";
-import { dateToISO } from "../utils/DateHelpers";
-import type { Sample } from "../types";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { useData } from '../contexts/DataContext';
+import { Sample } from '../types';
+import { Package, TestTube, AlertTriangle, Hammer, ArrowRight } from 'lucide-react';
 
-const MAX_SAMPLES_DISPLAY = 10;
+const MAX_SAMPLES_DISPLAY = 5;
 
 export function Dashboard() {
   const { companies, works, loads, samples } = useData();
@@ -25,21 +24,22 @@ export function Dashboard() {
 
   useEffect(() => {
     const today = new Date();
-    const todayISO = dateToISO(today);
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString().split('T')[0];
     
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowISO = dateToISO(tomorrow);
+    const tomorrowISO = tomorrow.toISOString().split('T')[0];
     
     const in7Days = new Date(today);
     in7Days.setDate(in7Days.getDate() + 7);
-    const in7DaysISO = dateToISO(in7Days);
+    const in7DaysISO = in7Days.toISOString().split('T')[0];
 
     const pending = samples.filter((s) => !s.resistencia_mpa);
     
     const testsOverdue = samples.filter((s) => {
       if (s.resistencia_mpa) return false;
-      return s.data_prevista_rompimento < todayISO;
+      return s.data_prevista_rompimento && s.data_prevista_rompimento < todayISO;
     });
     
     const testsToday = samples.filter((s) => {
@@ -55,7 +55,7 @@ export function Dashboard() {
     const testsNext7Days = samples.filter((s) => {
       if (s.resistencia_mpa) return false;
       const testDate = s.data_prevista_rompimento;
-      return testDate > todayISO && testDate <= in7DaysISO;
+      return testDate && testDate > todayISO && testDate <= in7DaysISO;
     });
 
     // Ordena por número de laboratório
@@ -86,7 +86,7 @@ export function Dashboard() {
             <CardTitle className="text-sm text-gray-700">
               Empresas Cadastradas
             </CardTitle>
-            <Building2 className="h-4 w-4 text-gray-500" />
+            <Package className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
             <div className="text-gray-900">
@@ -138,7 +138,7 @@ export function Dashboard() {
             <CardTitle className="text-sm text-gray-700">
               Amostras Pendentes
             </CardTitle>
-            <AlertCircle className="h-4 w-4 text-orange-500" />
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-gray-900">
@@ -162,7 +162,7 @@ export function Dashboard() {
                 </CardDescription>
               </div>
             </div>
-            <Tabs value={selectedPeriod} onValueChange={(value: string) => setSelectedPeriod(value as "overdue" | "today" | "tomorrow" | "week")}>
+            <Tabs value={selectedPeriod} onValueChange={(value: string) => setSelectedPeriod(value as any)}>
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overdue" className="relative">
                   Atrasados
@@ -245,7 +245,7 @@ export function Dashboard() {
                       
                       // Formata a data para exibição nos próximos 7 dias e atrasados
                       let dateDisplay = "";
-                      if (selectedPeriod === "week" || selectedPeriod === "overdue") {
+                      if ((selectedPeriod === "week" || selectedPeriod === "overdue") && sample.data_prevista_rompimento) {
                         const testDate = new Date(sample.data_prevista_rompimento + "T00:00:00");
                         dateDisplay = testDate.toLocaleDateString("pt-BR", { 
                           day: "2-digit", 
@@ -275,7 +275,7 @@ export function Dashboard() {
                               )}
                             </p>
                             <p className="text-sm text-gray-600">
-                              {work?.name} - Planilha #{load?.invoice_number} - {sample.idade_dias} dias
+                              {work?.nome} - Planilha #{load?.numero_planilha} - {sample.idade_dias} dias
                             </p>
                           </div>
                           <Badge variant={selectedPeriod === "overdue" ? "destructive" : "outline"}>

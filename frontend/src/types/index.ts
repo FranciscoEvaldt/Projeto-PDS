@@ -1,94 +1,274 @@
-// types/index.ts
-// Tipos TypeScript para o Sistema de Gestão de Laboratório de Concreto
-// Compatível com API real + PostgreSQL (IDs como string UUID)
+// ============================================
+// INTERFACES BASEADAS NO SCHEMA SQL
+// Sistema de Gestão de Laboratório de Concreto
+// ============================================
 
+// ============================================
+// COMPANY (Empresa)
+// ============================================
 export interface Company {
   id: number;
-  name: string;
-  cnpj: string;
-  phone: string;
-  email: string;
-  address?: string;
+  nome: string;
+  cnpj?: string;
+  endereco?: string;
+  telefone?: string;
+  email?: string;
   created_at?: string;
   updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
+  created_by?: number;
+  updated_by?: number;
 }
 
+// ============================================
+// WORK (Obra)
+// ============================================
 export interface Work {
   id: number;
-  empresa_id: number | null;
-  code: string;
-  name: string;
-  address: string;
-  cidade: string;
-  estado: string;
-  fck_projeto: number | null;
-  responsavel_obra: string;
-  contrato: string;
-  start_date: string | null;
-  status: 'active' | 'inactive' | 'completed' | 'paused';
+  empresa_id: number;
+  codigo?: string;
+  nome: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  fck_projeto?: number;
+  responsavel_obra?: string;
+  contrato?: string;
+  data_inicio?: string;
+  status?: string;
   created_at?: string;
   updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
+  created_by?: number;
+  updated_by?: number;
 }
 
+// ============================================
+// LOAD (Carga/Planilha)
+// ============================================
 export interface Load {
   id: number;
   obra_id: number;
-  invoice_number: number;
-  concrete_type: string | null;
-  molding_date: string;
-  caminhao: string;
-  nota_fiscal: string;
-  volume_m3: number;
-  slump_cm: number;
-  fck_mpa: number;
-  pavimento: string | null;
-  peca: string | null;
-  observacoes: string | null;
+  numero_planilha: number;
+  data_moldagem: string;
+  caminhao?: string;
+  nota_fiscal?: string;
+  volume_m3?: number;
+  slump_cm?: string;
+  fck_mpa?: number;
+  pavimento?: string;
+  peca?: string;
+  fornecedor_concreto?: string;
+  observacoes?: string;
   created_at?: string;
   updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
+  created_by?: number;
+  updated_by?: number;
 }
 
+// ============================================
+// SAMPLE (Amostra/Corpo de Prova)
+// ============================================
 export interface Sample {
   id: number;
-  carga_id: number; // importante! string, não number
+  carga_id: number;
   sequencia: number;
   numero_laboratorio: number;
-  data_prevista_rompimento: string;
-  data_rompimento: string | null;
-  data_moldagem: string;
-  idade_dias: number;
-  diametro_mm: number | null;
-  altura_mm: number | null;
-  carga_kn: number | null;
-  resistencia_mpa: number | null;
-  status: 'pendente' | 'testado' | string;
-  observacoes: string;
+  data_prevista_rompimento?: string;
+  data_rompimento?: string;
+  idade_dias?: number;
+  diametro_mm?: number;
+  altura_mm?: number;
+  carga_kn?: number;
+  resistencia_mpa?: number;
+  status?: 'pending' | 'tested' | 'cancelled';
   created_at?: string;
   updated_at?: string;
-  created_by?: string;
-  updated_by?: string;
+  created_by?: number;
+  updated_by?: number;
 }
 
+// ============================================
+// SYSTEM COUNTER
+// ============================================
+export interface SystemCounter {
+  id: number;
+  counter_name: string;
+  counter_value: number;
+  updated_at?: string;
+}
+
+// ============================================
+// USER (Usuário)
+// ============================================
 export interface User {
-  id: string;
-  name: string;
+  id: number;
+  nome: string;
   email: string;
-  role: 'admin' | 'user' | 'viewer';
+  senha?: string; // Não retornado nas queries normais
+  role?: 'admin' | 'manager' | 'user' | 'viewer';
+  ativo?: boolean;
+  ultimo_acesso?: string;
   created_at?: string;
   updated_at?: string;
 }
 
-// Helper para gerar próximo número de planilha
-export function getNextPlanilhaNumber(loads: Load[], workId: number): number {
-  const workLoads = loads.filter((load) => load.obra_id === workId);
-  if (workLoads.length === 0) return 1;
+// ============================================
+// VIEWS
+// ============================================
+export interface SampleComplete extends Sample {
+  obra_id: number;
+  numero_planilha: number;
+  data_moldagem: string;
+  fck_carga?: number;
+  fornecedor_concreto?: string;
+  obra_nome: string;
+  obra_codigo?: string;
+  empresa_id: number;
+  empresa_nome: string;
+}
 
-  const maxNumber = Math.max(...workLoads.map((load) => load.invoice_number));
+export interface WorkStatistics {
+  id: number;
+  nome: string;
+  codigo?: string;
+  total_cargas: number;
+  total_amostras: number;
+  amostras_testadas: number;
+  amostras_pendentes: number;
+  resistencia_media?: number;
+}
+
+// ============================================
+// FORM DATA
+// ============================================
+export interface CompanyFormData {
+  nome: string;
+  cnpj?: string;
+  endereco?: string;
+  telefone?: string;
+  email?: string;
+}
+
+export interface WorkFormData {
+  empresa_id: number;
+  codigo?: string;
+  nome: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LoadFormData {
+  obra_id: number;
+  numero_planilha: number;
+  data_moldagem: string;
+  caminhao?: string;
+  nota_fiscal?: string;
+  volume_m3?: number;
+  slump_cm?: string;
+  fck_mpa?: number;
+  pavimento?: string;
+  peca?: string;
+  fornecedor_concreto?: string;
+  observacoes?: string;
+}
+
+export interface SampleFormData {
+  carga_id: number;
+  sequencia: number;
+  numero_laboratorio: number;
+  data_prevista_rompimento?: string;
+  data_rompimento?: string;
+  idade_dias?: number;
+  diametro_mm?: number;
+  altura_mm?: number;
+  carga_kn?: number;
+  resistencia_mpa?: number;
+  status?: 'pending' | 'tested' | 'cancelled';
+}
+
+// ============================================
+// HELPERS E UTILIDADES
+// ============================================
+
+/**
+ * Estados do Brasil
+ */
+export const ESTADOS_BRASIL = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
+/**
+ * Calcular próximo número de planilha para uma obra
+ */
+export function getNextPlanilhaNumber(loads: Load[], obraId: number): number {
+  const obraLoads = loads.filter(l => l.obra_id === obraId);
+  if (obraLoads.length === 0) return 1;
+  
+  const maxNumber = Math.max(...obraLoads.map(l => l.numero_planilha));
   return maxNumber + 1;
+}
+
+/**
+ * Calcular data de rompimento
+ */
+export function calcularDataRompimento(dataMoldagem: string, idadeDias: number): string {
+  const data = new Date(dataMoldagem);
+  data.setDate(data.getDate() + idadeDias);
+  return data.toISOString().split('T')[0];
+}
+
+/**
+ * Formatar data para padrão brasileiro
+ */
+export function formatDateBR(dateStr?: string): string {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr + 'T00:00:00');
+  return date.toLocaleDateString('pt-BR');
+}
+
+/**
+ * Adicionar dias a uma data
+ */
+export function addDaysToDate(dateStr: string, days: number): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+}
+
+/**
+ * Gerar código de amostra
+ * Formato: OB001-PL001-C01-A001
+ */
+export function gerarCodigoAmostra(
+  obraId: number,
+  numeroPlanilha: number,
+  cargaSequencia: number,
+  amostraSequencia: number
+): string {
+  const obra = String(obraId).padStart(3, '0');
+  const planilha = String(numeroPlanilha).padStart(3, '0');
+  const carga = String(cargaSequencia).padStart(2, '0');
+  const amostra = String(amostraSequencia).padStart(3, '0');
+  
+  return `OB${obra}-PL${planilha}-C${carga}-A${amostra}`;
+}
+
+/**
+ * Calcular percentual em relação ao FCK
+ */
+export function calcularPercentualFck(resistenciaMpa: number, fckMpa: number): number {
+  if (!fckMpa || fckMpa === 0) return 0;
+  return Number(((resistenciaMpa / fckMpa) * 100).toFixed(2));
+}
+
+/**
+ * Verificar conformidade
+ */
+export function verificarConformidade(resistenciaMpa: number, fckMpa: number): boolean {
+  if (!fckMpa || !resistenciaMpa) return false;
+  return resistenciaMpa >= fckMpa;
 }

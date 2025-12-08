@@ -1,65 +1,62 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { useState } from 'react';
+import { Plus, Pencil, Trash2, User as UserIcon, Eye, EyeOff, Shield, UserCog, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
-import { Plus, Pencil, Trash2, UserCog, Shield, User as UserIcon, Key, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { useAuth } from '../contexts/useAuth';
+import { User } from '../services/api';
 
-interface User {
-  id: number;
+interface UserFormData {
   username: string;
   password: string;
-  nome: string;
+  name: string;
   role: 'admin' | 'user';
 }
 
-const USERS_STORAGE_KEY = 'concrete-lab-users';
-
 export function UsersManager() {
-  const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
+  const { users, addUser, updateUser, deleteUser, user: currentUser } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [formData, setFormData] = useState({
+
+  // Verificar se o usuário atual é admin
+  if (currentUser?.role !== 'admin') {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <AlertTriangle className="h-12 w-12 text-red-600 mb-4" />
+          <h3 className="text-lg font-medium text-red-900 mb-2">Acesso Negado</h3>
+          <p className="text-red-700 text-center">
+            Apenas administradores podem acessar o gerenciamento de usuários.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const [formData, setFormData] = useState<UserFormData>({
     username: '',
     password: '',
-    nome: '',
-    role: 'user' as 'admin' | 'user',
+    name: '',
+    role: 'user',
   });
-
-  // Carregar usuários do localStorage
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = () => {
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    }
-  };
-
-  const saveUsers = (updatedUsers: User[]) => {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-    setUsers(updatedUsers);
-  };
 
   const resetForm = () => {
     setFormData({
       username: '',
       password: '',
-      nome: '',
+      name: '',
       role: 'user',
     });
+    setShowPassword(false);
     setEditingUser(null);
   };
 
@@ -68,51 +65,42 @@ export function UsersManager() {
     setIsSubmitting(true);
 
     try {
-      // Validar username único
-      const usernameExists = users.some(
-        (u) => u.username === formData.username && u.id !== editingUser?.id
-      );
-
-      if (usernameExists) {
-        toast.error('Nome de usuário já existe!');
+      // Validação
+      if (!formData.username || !formData.password || !formData.name) {
+        toast.error('Preencha todos os campos obrigatórios');
         setIsSubmitting(false);
         return;
       }
 
-      if (editingUser) {
-        // Editar usuário existente
-        const updatedUsers = users.map((u) =>
-          u.id === editingUser.id
-            ? {
-                ...u,
-                username: formData.username,
-                // Só atualiza senha se foi preenchida
-                password: formData.password || u.password,
-                nome: formData.nome,
-                role: formData.role,
-              }
-            : u
-        );
-        saveUsers(updatedUsers);
-        toast.success('Usuário atualizado com sucesso!');
-      } else {
-        // Criar novo usuário
-        const newUser: User = {
-          id: Math.max(0, ...users.map((u) => u.id)) + 1,
-          username: formData.username,
-          password: formData.password,
-          nome: formData.nome,
-          role: formData.role,
-        };
-        saveUsers([...users, newUser]);
-        toast.success('Usuário criado com sucesso!');
+      if (formData.username.length < 3) {
+        toast.error('O usuário deve ter pelo menos 3 caracteres');
+        setIsSubmitting(false);
+        return;
       }
+
+      if (formData.password.length < 6) {
+        toast.error('A senha deve ter pelo menos 6 caracteres');
+        setIsSubmitting(false);
+        return;
+      }
+
+      await addUser({
+        username: formData.username,
+        password: formData.password,
+        name: formData.name,
+        role: formData.role,
+      });
 
       setIsDialogOpen(false);
       resetForm();
-    } catch (error) {
-      console.error('Erro ao salvar usuário:', error);
-      toast.error('Erro ao salvar usuário');
+      toast.success('Usuário criado com sucesso!');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao criar usuário';
+      if (errorMessage.includes('já existe')) {
+        toast.error('Já existe um usuário com esse nome de usuário');
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -120,300 +108,379 @@ export function UsersManager() {
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    setFormData({
-      username: user.username,
-      password: '', // Não preenche a senha por segurança
-      nome: user.nome,
-      role: user.role,
-    });
-    setIsDialogOpen(true);
+    setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (userId: number) => {
-    const userToDelete = users.find((u) => u.id === userId);
-    
-    // Impedir exclusão do próprio usuário logado
-    if (userToDelete?.username === currentUser?.username) {
-      toast.error('Você não pode excluir seu próprio usuário!');
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    setIsSubmitting(true);
+    try {
+      if (!editingUser.name) {
+        toast.error('O nome é obrigatório');
+        setIsSubmitting(false);
+        return;
+      }
+
+      await updateUser(editingUser.id, {
+        name: editingUser.name,
+        role: editingUser.role,
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+      toast.success('Usuário atualizado com sucesso!');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error(`Erro ao atualizar usuário: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (userId: number, username: string) => {
+    if (userId === currentUser?.id) {
+      toast.error('Você não pode excluir seu próprio usuário');
       return;
     }
 
-    // Impedir exclusão se for o último admin
-    if (userToDelete?.role === 'admin') {
-      const adminCount = users.filter((u) => u.role === 'admin').length;
-      if (adminCount <= 1) {
-        toast.error('Não é possível excluir o último administrador!');
-        return;
+    if (username === 'admin') {
+      toast.error('O usuário admin não pode ser excluído');
+      return;
+    }
+
+    if (window.confirm(`Tem certeza que deseja excluir o usuário "${username}"?`)) {
+      try {
+        await deleteUser(userId);
+        toast.success('Usuário excluído com sucesso!');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+        toast.error(`Erro ao excluir usuário: ${errorMessage}`);
       }
     }
-
-    if (confirm(`Tem certeza que deseja excluir o usuário "${userToDelete?.nome}"?`)) {
-      const updatedUsers = users.filter((u) => u.id !== userId);
-      saveUsers(updatedUsers);
-      toast.success('Usuário excluído com sucesso!');
-    }
   };
 
-  const handleResetPassword = (user: User) => {
-    const newPassword = prompt(
-      `Digite a nova senha para o usuário "${user.nome}":`
-    );
-
-    if (newPassword && newPassword.length >= 6) {
-      const updatedUsers = users.map((u) =>
-        u.id === user.id ? { ...u, password: newPassword } : u
+  const getRoleBadge = (role: string) => {
+    if (role === 'admin') {
+      return (
+        <Badge variant="default" className="flex items-center gap-1">
+          <Shield className="h-3 w-3" />
+          Administrador
+        </Badge>
       );
-      saveUsers(updatedUsers);
-      toast.success('Senha redefinida com sucesso!');
-    } else if (newPassword) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
     }
-  };
-
-  // Verificar se o usuário atual é admin
-  if (currentUser?.role !== 'admin') {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Gerenciamento de Usuários</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Acesso Negado</AlertTitle>
-            <AlertDescription>
-              Apenas administradores têm acesso ao gerenciamento de usuários.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <Badge variant="secondary" className="flex items-center gap-1">
+        <UserIcon className="h-3 w-3" />
+        Usuário
+      </Badge>
     );
-  }
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <UserCog className="w-5 h-5" />
-              Gerenciamento de Usuários
-            </CardTitle>
-            <CardDescription>
-              Crie e gerencie os usuários do sistema
-            </CardDescription>
-          </div>
-          <Dialog
-            open={isDialogOpen}
-            onOpenChange={(open: boolean) => {
-              setIsDialogOpen(open);
-              if (!open) resetForm();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Novo Usuário
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingUser
-                    ? 'Edite as informações do usuário'
-                    : 'Preencha os dados para criar um novo usuário'}
-                </DialogDescription>
-              </DialogHeader>
-
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="nome">Nome Completo *</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) =>
-                        setFormData({ ...formData, nome: e.target.value })
-                      }
-                      placeholder="Ex: João Silva"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="username">Usuário (Login) *</Label>
-                    <Input
-                      id="username"
-                      value={formData.username}
-                      onChange={(e) =>
-                        setFormData({ ...formData, username: e.target.value })
-                      }
-                      placeholder="Ex: joao.silva"
-                      required
-                      autoComplete="off"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Será usado para fazer login no sistema
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">
-                      Senha {editingUser ? '(deixe em branco para manter)' : '*'}
-                    </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      placeholder="Mínimo 6 caracteres"
-                      required={!editingUser}
-                      minLength={6}
-                      autoComplete="new-password"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="role">Tipo de Usuário *</Label>
-                    <Select
-                      value={formData.role}
-                      onValueChange={(value: 'admin' | 'user') =>
-                        setFormData({ ...formData, role: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">
-                          <div className="flex items-center gap-2">
-                            <UserIcon className="w-4 h-4" />
-                            Usuário - Acesso padrão ao sistema
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="admin">
-                          <div className="flex items-center gap-2">
-                            <Shield className="w-4 h-4" />
-                            Administrador - Acesso total
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {editingUser ? 'Atualizar' : 'Criar Usuário'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2>Gerenciar Usuários</h2>
+          <p className="text-muted-foreground">
+            Crie e gerencie usuários do sistema
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        {users.length === 0 ? (
-          <div className="text-center py-8 text-gray-600">
-            Nenhum usuário cadastrado. Clique em "Novo Usuário" para começar.
-          </div>
-        ) : (
-          <>
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900">
-                📊 <strong>{users.length}</strong> usuário(s) cadastrado(s) •{' '}
-                <strong>{users.filter((u) => u.role === 'admin').length}</strong>{' '}
-                administrador(es) •{' '}
-                <strong>{users.filter((u) => u.role === 'user').length}</strong>{' '}
-                usuário(s) padrão
+        <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
+          setIsDialogOpen(open);
+          if (!open) resetForm();
+        }}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Usuário
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Criar Novo Usuário</DialogTitle>
+              <DialogDescription>
+                Preencha as informações do novo usuário
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">Usuário *</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Digite o nome de usuário"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  required
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mínimo 3 caracteres, sem espaços
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Digite o nome completo"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha *</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Digite a senha"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Mínimo 6 caracteres
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Perfil *</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value: 'admin' | 'user') => setFormData({ ...formData, role: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Administradores têm acesso total ao sistema
+                </p>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    resetForm();
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Criando...' : 'Criar Usuário'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Dialog de Edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do usuário
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingUser && (
+            <form onSubmit={handleUpdateUser} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Usuário</Label>
+                <Input
+                  value={editingUser.username}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  O nome de usuário não pode ser alterado
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome Completo *</Label>
+                <Input
+                  id="edit-name"
+                  type="text"
+                  placeholder="Digite o nome completo"
+                  value={editingUser.name}
+                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Perfil *</Label>
+                <Select
+                  value={editingUser.role}
+                  onValueChange={(value: 'admin' | 'user') => setEditingUser({ ...editingUser, role: value })}
+                  disabled={editingUser.username === 'admin'}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+                {editingUser.username === 'admin' && (
+                  <p className="text-xs text-muted-foreground">
+                    O perfil do admin não pode ser alterado
+                  </p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingUser(null);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Atualizando...' : 'Atualizar'}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Lista de Usuários */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserCog className="h-5 w-5" />
+            Usuários Cadastrados
+          </CardTitle>
+          <CardDescription>
+            Total: {users.length} {users.length === 1 ? 'usuário' : 'usuários'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {users.length > 0 ? (
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Perfil</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.username}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <UserIcon className="w-4 h-4 text-white" />
+                          </div>
+                          {user.username}
+                          {user.username === currentUser?.username && (
+                            <Badge variant="outline" className="text-xs">
+                              Você
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{user.name}</TableCell>
+                      <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(user)}
+                            title="Editar usuário"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(user.id, user.username)}
+                            disabled={user.username === currentUser?.username || user.username === 'admin'}
+                            title="Excluir usuário"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <UserCog className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                Nenhum usuário cadastrado. Clique em "Novo Usuário" para começar.
               </p>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {user.username === currentUser?.username && (
-                          <Badge variant="secondary" className="text-xs">
-                            Você
-                          </Badge>
-                        )}
-                        <span className="font-medium">{user.nome}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                        {user.username}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      {user.role === 'admin' ? (
-                        <Badge className="flex items-center gap-1 w-fit">
-                          <Shield className="w-3 h-3" />
-                          Administrador
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                          <UserIcon className="w-3 h-3" />
-                          Usuário
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleResetPassword(user)}
-                          title="Redefinir senha"
-                        >
-                          <Key className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(user)}
-                          title="Editar usuário"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(user.id)}
-                          disabled={user.username === currentUser?.username}
-                          title={
-                            user.username === currentUser?.username
-                              ? 'Você não pode excluir seu próprio usuário'
-                              : 'Excluir usuário'
-                          }
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </>
-        )}
-      </CardContent>
-    </Card>
+      {/* Informações de Segurança */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <Shield className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <p className="font-medium text-blue-900">Dicas de Segurança</p>
+              <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                <li>Use senhas fortes com pelo menos 6 caracteres</li>
+                <li>Combine letras, números e caracteres especiais</li>
+                <li>Não compartilhe credenciais entre usuários</li>
+                <li>Revise periodicamente os acessos ao sistema</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
+
+export default UsersManager;
