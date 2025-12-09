@@ -5,16 +5,28 @@ dotenv.config();
 
 const { Pool } = pg;
 
-const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT || 5433,
-  database: process.env.DB_NAME || "laboratorio_concreto",
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "2450",
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+// Se existir DATABASE_URL (Render), use ela
+// Se não existir, usa as variáveis locais separadas
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    })
+  : new Pool({
+      host: process.env.DB_HOST || "localhost",
+      port: process.env.DB_PORT || 5433,
+      database: process.env.DB_NAME || "laboratorio_concreto",
+      user: process.env.DB_USER || "postgres",
+      password: process.env.DB_PASSWORD || "2450",
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
 
 pool.on("connect", () => {
   console.log("✅ Conectado ao PostgreSQL");
