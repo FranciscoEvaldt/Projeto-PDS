@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import { testConnection } from "./config/database.js";
 import companiesRouter from "./routes/companies.js";
 import worksRouter from "./routes/works.js";
@@ -13,6 +16,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Middleware básico
 app.use(
   cors({
     origin: "*",
@@ -20,14 +24,17 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Log de requisições
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.url}`);
   next();
 });
 
+// Health Check
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -36,19 +43,35 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Rotas da API
 app.use("/api/companies", companiesRouter);
 app.use("/api/works", worksRouter);
 app.use("/api/loads", loadsRouter);
 app.use("/api/samples", samplesRouter);
 app.use("/api/users", usersRouter);
 
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Rota não encontrada",
-    path: req.url,
-    method: req.method,
-  });
+// ======================================================================
+// 🟩 SERVIR O FRONTEND (VITE) EM PRODUÇÃO
+// ======================================================================
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// dist está NA RAIZ, e server.js está em /src → precisa voltar 1 pasta
+const distPath = path.join(__dirname, "../dist");
+
+console.log("🟦 Caminho da build React:", distPath);
+
+app.use(express.static(distPath));
+
+// Rota coringa para SPA (React)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
 });
+
+// ======================================================================
+// ERROS
+// ======================================================================
 
 app.use((err, req, res, next) => {
   console.error("❌ Erro no servidor:", err);
@@ -59,40 +82,28 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ======================================================================
+// INICIAR SERVIDOR
+// ======================================================================
+
 async function startServer() {
   try {
     const connected = await testConnection();
 
-   if (!connected) {
-  console.error("❌ Não foi possível conectar ao banco de dados.");
-  console.error("   → Verifique se a variável DATABASE_URL está configurada no Render.");
-  console.error("   → Verifique se a senha do banco está correta.");
-  process.exit(1);
-}
-
+    if (!connected) {
+      console.error("❌ Não foi possível conectar ao banco de dados.");
+      console.error("→ Verifique a variável DATABASE_URL no Render.");
+      process.exit(1);
+    }
 
     app.listen(PORT, () => {
-      console.log("");
-      console.log(
-        "═══════════════════════════════════════════════════════════"
-      );
+      console.log("\n═══════════════════════════════════════════════════════════");
       console.log("🚀 Servidor Backend iniciado com sucesso!");
-      console.log(
-        "═══════════════════════════════════════════════════════════"
-      );
+      console.log("═══════════════════════════════════════════════════════════");
       console.log(`📍 Porta: ${PORT}`);
-      console.log(`🌐 URL: http://localhost:${PORT}`);
       console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-      console.log("");
-      console.log("📚 Rotas disponíveis:");
-      console.log(`   • GET/POST/PUT/DELETE /api/companies`);
-      console.log(`   • GET/POST/PUT/DELETE /api/works`);
-      console.log(`   • GET/POST/PUT/DELETE /api/loads`);
-      console.log(`   • GET/POST/PUT/DELETE /api/samples`);
-      console.log(`   • POST              /api/samples/bulk`);
-      console.log(`   • POST              /api/users/authenticate`);
-      console.log(`   • GET/POST/PUT/DELETE /api/users`);
-      console.log("");
+      console.log("🌐 Servindo frontend Vite /dist");
+      console.log("═══════════════════════════════════════════════════════════\n");
     });
   } catch (error) {
     console.error("❌ Erro ao iniciar servidor:", error);
