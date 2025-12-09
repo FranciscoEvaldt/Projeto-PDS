@@ -1,39 +1,83 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, User as UserIcon, Eye, EyeOff, Shield, UserCog, AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Badge } from './ui/badge';
-import { User } from '../services/api';
+import { useState } from "react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  User as UserIcon,
+  Eye,
+  EyeOff,
+  Shield,
+  UserCog,
+  AlertTriangle,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import { Badge } from "./ui/badge";
+import { User } from "../services/api";
 
 interface UserFormData {
   username: string;
   password: string;
   name: string;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
 }
 
 export function UsersManager() {
-  const { users, addUser, updateUser, deleteUser, user: currentUser } = useAuth();
+  const {
+    users,
+    addUser,
+    updateUser,
+    deleteUser,
+    user: currentUser,
+  } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Verificar se o usuário atual é admin
-  if (currentUser?.role !== 'admin') {
+  if (currentUser?.role !== "admin") {
     return (
       <Card className="border-red-200 bg-red-50">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <AlertTriangle className="h-12 w-12 text-red-600 mb-4" />
-          <h3 className="text-lg font-medium text-red-900 mb-2">Acesso Negado</h3>
+          <h3 className="text-lg font-medium text-red-900 mb-2">
+            Acesso Negado
+          </h3>
           <p className="text-red-700 text-center">
             Apenas administradores podem acessar o gerenciamento de usuários.
           </p>
@@ -43,18 +87,18 @@ export function UsersManager() {
   }
 
   const [formData, setFormData] = useState<UserFormData>({
-    username: '',
-    password: '',
-    name: '',
-    role: 'user',
+    username: "",
+    password: "",
+    name: "",
+    role: "user",
   });
 
   const resetForm = () => {
     setFormData({
-      username: '',
-      password: '',
-      name: '',
-      role: 'user',
+      username: "",
+      password: "",
+      name: "",
+      role: "user",
     });
     setShowPassword(false);
     setEditingUser(null);
@@ -65,21 +109,20 @@ export function UsersManager() {
     setIsSubmitting(true);
 
     try {
-      // Validação
       if (!formData.username || !formData.password || !formData.name) {
-        toast.error('Preencha todos os campos obrigatórios');
+        toast.error("Preencha todos os campos obrigatórios");
         setIsSubmitting(false);
         return;
       }
 
       if (formData.username.length < 3) {
-        toast.error('O usuário deve ter pelo menos 3 caracteres');
+        toast.error("O usuário deve ter pelo menos 3 caracteres");
         setIsSubmitting(false);
         return;
       }
 
       if (formData.password.length < 6) {
-        toast.error('A senha deve ter pelo menos 6 caracteres');
+        toast.error("A senha deve ter pelo menos 6 caracteres");
         setIsSubmitting(false);
         return;
       }
@@ -93,11 +136,12 @@ export function UsersManager() {
 
       setIsDialogOpen(false);
       resetForm();
-      toast.success('Usuário criado com sucesso!');
+      toast.success("Usuário criado com sucesso!");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao criar usuário';
-      if (errorMessage.includes('já existe')) {
-        toast.error('Já existe um usuário com esse nome de usuário');
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro ao criar usuário";
+      if (errorMessage.includes("já existe")) {
+        toast.error("Já existe um usuário com esse nome de usuário");
       } else {
         toast.error(errorMessage);
       }
@@ -118,7 +162,7 @@ export function UsersManager() {
     setIsSubmitting(true);
     try {
       if (!editingUser.name) {
-        toast.error('O nome é obrigatório');
+        toast.error("O nome é obrigatório");
         setIsSubmitting(false);
         return;
       }
@@ -130,9 +174,10 @@ export function UsersManager() {
 
       setIsEditDialogOpen(false);
       setEditingUser(null);
-      toast.success('Usuário atualizado com sucesso!');
+      toast.success("Usuário atualizado com sucesso!");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro desconhecido";
       toast.error(`Erro ao atualizar usuário: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
@@ -141,28 +186,31 @@ export function UsersManager() {
 
   const handleDelete = async (userId: number, username: string) => {
     if (userId === currentUser?.id) {
-      toast.error('Você não pode excluir seu próprio usuário');
+      toast.error("Você não pode excluir seu próprio usuário");
       return;
     }
 
-    if (username === 'admin') {
-      toast.error('O usuário admin não pode ser excluído');
+    if (username === "admin") {
+      toast.error("O usuário admin não pode ser excluído");
       return;
     }
 
-    if (window.confirm(`Tem certeza que deseja excluir o usuário "${username}"?`)) {
+    if (
+      window.confirm(`Tem certeza que deseja excluir o usuário "${username}"?`)
+    ) {
       try {
         await deleteUser(userId);
-        toast.success('Usuário excluído com sucesso!');
+        toast.success("Usuário excluído com sucesso!");
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+        const errorMessage =
+          error instanceof Error ? error.message : "Erro desconhecido";
         toast.error(`Erro ao excluir usuário: ${errorMessage}`);
       }
     }
   };
 
   const getRoleBadge = (role: string) => {
-    if (role === 'admin') {
+    if (role === "admin") {
       return (
         <Badge variant="default" className="flex items-center gap-1">
           <Shield className="h-3 w-3" />
@@ -187,10 +235,13 @@ export function UsersManager() {
             Crie e gerencie usuários do sistema
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open: boolean) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -213,7 +264,9 @@ export function UsersManager() {
                   type="text"
                   placeholder="Digite o nome de usuário"
                   value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, username: e.target.value })
+                  }
                   required
                   autoComplete="off"
                 />
@@ -229,7 +282,9 @@ export function UsersManager() {
                   type="text"
                   placeholder="Digite o nome completo"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -239,10 +294,12 @@ export function UsersManager() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Digite a senha"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     required
                     autoComplete="new-password"
                     className="pr-10"
@@ -269,7 +326,9 @@ export function UsersManager() {
                 <Label htmlFor="role">Perfil *</Label>
                 <Select
                   value={formData.role}
-                  onValueChange={(value: 'admin' | 'user') => setFormData({ ...formData, role: value })}
+                  onValueChange={(value: "admin" | "user") =>
+                    setFormData({ ...formData, role: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -297,7 +356,7 @@ export function UsersManager() {
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Criando...' : 'Criar Usuário'}
+                  {isSubmitting ? "Criando..." : "Criar Usuário"}
                 </Button>
               </DialogFooter>
             </form>
@@ -305,7 +364,6 @@ export function UsersManager() {
         </Dialog>
       </div>
 
-      {/* Dialog de Edição */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -336,7 +394,9 @@ export function UsersManager() {
                   type="text"
                   placeholder="Digite o nome completo"
                   value={editingUser.name}
-                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, name: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -345,8 +405,10 @@ export function UsersManager() {
                 <Label htmlFor="edit-role">Perfil *</Label>
                 <Select
                   value={editingUser.role}
-                  onValueChange={(value: 'admin' | 'user') => setEditingUser({ ...editingUser, role: value })}
-                  disabled={editingUser.username === 'admin'}
+                  onValueChange={(value: "admin" | "user") =>
+                    setEditingUser({ ...editingUser, role: value })
+                  }
+                  disabled={editingUser.username === "admin"}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -356,7 +418,7 @@ export function UsersManager() {
                     <SelectItem value="admin">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
-                {editingUser.username === 'admin' && (
+                {editingUser.username === "admin" && (
                   <p className="text-xs text-muted-foreground">
                     O perfil do admin não pode ser alterado
                   </p>
@@ -376,7 +438,7 @@ export function UsersManager() {
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Atualizando...' : 'Atualizar'}
+                  {isSubmitting ? "Atualizando..." : "Atualizar"}
                 </Button>
               </DialogFooter>
             </form>
@@ -384,7 +446,6 @@ export function UsersManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Lista de Usuários */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -392,7 +453,7 @@ export function UsersManager() {
             Usuários Cadastrados
           </CardTitle>
           <CardDescription>
-            Total: {users.length} {users.length === 1 ? 'usuário' : 'usuários'}
+            Total: {users.length} {users.length === 1 ? "usuário" : "usuários"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -439,7 +500,10 @@ export function UsersManager() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(user.id, user.username)}
-                            disabled={user.username === currentUser?.username || user.username === 'admin'}
+                            disabled={
+                              user.username === currentUser?.username ||
+                              user.username === "admin"
+                            }
                             title="Excluir usuário"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -455,14 +519,14 @@ export function UsersManager() {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <UserCog className="h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
-                Nenhum usuário cadastrado. Clique em "Novo Usuário" para começar.
+                Nenhum usuário cadastrado. Clique em "Novo Usuário" para
+                começar.
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Informações de Segurança */}
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="pt-6">
           <div className="flex gap-3">

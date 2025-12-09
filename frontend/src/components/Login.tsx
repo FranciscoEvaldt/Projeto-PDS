@@ -1,44 +1,54 @@
-import { useState } from 'react';
-import { FlaskConical, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { useState } from "react";
+import { FlaskConical, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./ui/card";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 interface LoginProps {
   onLogin: (username: string, password: string) => Promise<boolean>;
 }
 
 export function Login({ onLogin }: LoginProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!username || !password) {
-      setError('Por favor, preencha todos os campos');
-      toast.error('Por favor, preencha todos os campos');
+      setError("Por favor, preencha todos os campos");
+      toast.error("Por favor, preencha todos os campos");
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       const success = await onLogin(username, password);
       if (!success) {
-        setError('Usuário ou senha incorretos. Verifique suas credenciais e tente novamente.');
-        setPassword(''); // Limpar senha em caso de erro
+        setError(
+          "Usuário ou senha incorretos. Verifique suas credenciais e tente novamente."
+        );
+        setPassword("");
       }
     } catch (error) {
-      setError('Erro ao tentar fazer login. Verifique sua conexão com o servidor.');
-      toast.error('Erro ao conectar com o servidor');
-      setPassword('');
+      setError(
+        "Erro ao tentar fazer login. Verifique sua conexão com o servidor."
+      );
+      toast.error("Erro ao conectar com o servidor");
+      setPassword("");
     } finally {
       setIsLoading(false);
     }
@@ -47,16 +57,16 @@ export function Login({ onLogin }: LoginProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo e Título */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-2xl mb-4 shadow-lg">
             <FlaskConical className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-gray-900 mb-2">Sistema de Gestão</h1>
-          <p className="text-gray-600">Laboratório de Concreto - Model Engenharia</p>
+          <p className="text-gray-600">
+            Laboratório de Concreto - Model Engenharia
+          </p>
         </div>
 
-        {/* Card de Login */}
         <Card className="shadow-xl border-0">
           <CardHeader className="space-y-1 pb-6">
             <CardTitle className="text-center">Bem-vindo de volta</CardTitle>
@@ -85,7 +95,7 @@ export function Login({ onLogin }: LoginProps) {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Digite sua senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -108,31 +118,29 @@ export function Login({ onLogin }: LoginProps) {
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? 'Entrando...' : 'Entrar'}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
 
-            {/* Informações de Acesso */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
               <p className="text-sm text-blue-800 mb-2">
                 <strong>🔐 Credenciais de Acesso:</strong>
               </p>
               <div className="space-y-1 text-xs text-blue-700">
                 <p>
-                  <strong>Usuário:</strong> <code className="bg-blue-100 px-2 py-0.5 rounded">admin</code>
+                  <strong>Usuário:</strong>{" "}
+                  <code className="bg-blue-100 px-2 py-0.5 rounded">admin</code>
                 </p>
                 <p>
-                  <strong>Senha:</strong> <code className="bg-blue-100 px-2 py-0.5 rounded">admin123</code>
+                  <strong>Senha:</strong>{" "}
+                  <code className="bg-blue-100 px-2 py-0.5 rounded">
+                    admin123
+                  </code>
                 </p>
               </div>
             </div>
 
-            {/* Mensagem de Erro */}
             {error && (
               <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-lg animate-shake">
                 <div className="flex items-start gap-3">
@@ -142,7 +150,9 @@ export function Login({ onLogin }: LoginProps) {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-red-900 mb-1">Erro de Autenticação</p>
+                    <p className="text-sm font-medium text-red-900 mb-1">
+                      Erro de Autenticação
+                    </p>
                     <p className="text-sm text-red-700">{error}</p>
                   </div>
                 </div>
@@ -151,7 +161,6 @@ export function Login({ onLogin }: LoginProps) {
           </CardContent>
         </Card>
 
-        {/* Footer */}
         <div className="text-center mt-6 text-sm text-gray-600">
           <p>© 2024 Model Engenharia - Laboratório de Concreto</p>
         </div>

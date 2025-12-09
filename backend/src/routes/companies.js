@@ -1,21 +1,16 @@
-import express from 'express';
-import companiesController from '../controllers/companiesController.js';
+import express from "express";
+import companiesController from "../controllers/companiesController.js";
 
 const router = express.Router();
 
-// GET /api/companies - Listar todas as empresas
-router.get('/', companiesController.getAll);
+router.get("/", companiesController.getAll);
 
-// GET /api/companies/:id - Buscar empresa por ID
-router.get('/:id', companiesController.getById);
+router.get("/:id", companiesController.getById);
 
-// POST /api/companies - Criar nova empresa
-router.post('/', companiesController.create);
+router.post("/", companiesController.create);
 
-// PUT /api/companies/:id - Atualizar empresa
-router.put('/:id', companiesController.update);
+router.put("/:id", companiesController.update);
 
-// DELETE /api/companies/:id - Deletar empresa
-router.delete('/:id', companiesController.delete);
+router.delete("/:id", companiesController.delete);
 
 export default router;

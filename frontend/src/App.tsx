@@ -1,20 +1,30 @@
-import { useState } from 'react';
-import { useApiStorage } from './hooks/useApiStorage';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
-import { FlaskConical, Building2, Hammer, TestTube, ClipboardCheck, FileText, LogOut, User, Users } from 'lucide-react';
-import { Dashboard } from './components/Dashboard';
-import { CompaniesManager } from './components/CompaniesManager';
-import { WorksManager } from './components/WorksManager';
-import { LoadsManagerNew } from './components/LoadsManagerNew';
-import { SamplesManager } from './components/SamplesManager';
-import { ReportsManager } from './components/ReportsManager';
-import { UsersManager } from './components/UsersManager';
-import { Login } from './components/Login';
-import { Button } from './components/ui/button';
-import { Toaster } from './components/ui/sonner';
-import { DataProvider } from './contexts/DataContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useState } from "react";
+import { useApiStorage } from "./hooks/useApiStorage";
+import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import {
+  FlaskConical,
+  Building2,
+  Hammer,
+  TestTube,
+  ClipboardCheck,
+  FileText,
+  LogOut,
+  User,
+  Users,
+} from "lucide-react";
+import { Dashboard } from "./components/Dashboard";
+import { CompaniesManager } from "./components/CompaniesManager";
+import { WorksManager } from "./components/WorksManager";
+import { LoadsManagerNew } from "./components/LoadsManagerNew";
+import { SamplesManager } from "./components/SamplesManager";
+import { ReportsManager } from "./components/ReportsManager";
+import { UsersManager } from "./components/UsersManager";
+import { Login } from "./components/Login";
+import { Button } from "./components/ui/button";
+import { Toaster } from "./components/ui/sonner";
+import { DataProvider } from "./contexts/DataContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,16 +32,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './components/ui/dropdown-menu';
+} from "./components/ui/dropdown-menu";
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const { isLoading, error, loadAllData } = useApiStorage();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
-    toast.success('Logout realizado com sucesso!');
+    toast.success("Logout realizado com sucesso!");
   };
 
   // Mostrar loading enquanto carrega dados da API
@@ -40,7 +50,9 @@ function AppContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Carregando dados do servidor PostgreSQL...</p>
+          <p className="text-gray-600">
+            Carregando dados do servidor PostgreSQL...
+          </p>
         </div>
       </div>
     );
@@ -53,8 +65,12 @@ function AppContent() {
         <div className="max-w-2xl w-full p-8 bg-white rounded-lg shadow-lg border-2 border-red-200">
           <div className="text-center mb-6">
             <div className="text-red-600 text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl text-gray-900 mb-2">Backend Desconectado</h2>
-            <p className="text-gray-600 mb-6">Não foi possível conectar ao servidor PostgreSQL</p>
+            <h2 className="text-2xl text-gray-900 mb-2">
+              Backend Desconectado
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Não foi possível conectar ao servidor PostgreSQL
+            </p>
           </div>
 
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -64,7 +80,9 @@ function AppContent() {
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-            <h3 className="text-lg text-gray-900 mb-4">🚀 Como Iniciar o Backend:</h3>
+            <h3 className="text-lg text-gray-900 mb-4">
+              🚀 Como Iniciar o Backend:
+            </h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">
@@ -83,7 +101,9 @@ function AppContent() {
                   2
                 </span>
                 <div>
-                  <p className="text-gray-900">Instale as dependências (primeira vez)</p>
+                  <p className="text-gray-900">
+                    Instale as dependências (primeira vez)
+                  </p>
                   <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-xs">
                     npm install
                   </code>
@@ -95,8 +115,12 @@ function AppContent() {
                   3
                 </span>
                 <div>
-                  <p className="text-gray-900">Configure o arquivo .env com suas credenciais PostgreSQL</p>
-                  <p className="text-xs text-gray-600 mt-1">Veja backend/.env.example</p>
+                  <p className="text-gray-900">
+                    Configure o arquivo .env com suas credenciais PostgreSQL
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Veja backend/.env.example
+                  </p>
                 </div>
               </div>
 
@@ -118,9 +142,9 @@ function AppContent() {
             <Button onClick={() => loadAllData()} className="flex-1">
               Tentar Conectar Novamente
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => window.open('/INSTRUÇÕES_BACKEND.md', '_blank')}
+            <Button
+              variant="outline"
+              onClick={() => window.open("/INSTRUÇÕES_BACKEND.md", "_blank")}
               className="flex-1"
             >
               Ver Instruções Completas
@@ -128,7 +152,10 @@ function AppContent() {
           </div>
 
           <p className="text-xs text-gray-500 text-center mt-4">
-            O backend deve estar rodando em <code className="bg-gray-100 px-2 py-1 rounded">http://localhost:3001</code>
+            O backend deve estar rodando em{" "}
+            <code className="bg-gray-100 px-2 py-1 rounded">
+              http://localhost:3001
+            </code>
           </p>
         </div>
       </div>
@@ -138,7 +165,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" richColors />
-      
+
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -147,11 +174,15 @@ function AppContent() {
                 <FlaskConical className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-gray-900">Sistema de Gestão - Laboratório de Concreto</h1>
-                <p className="text-gray-600 text-sm">Controle de Corpos de Prova e Ensaios - Model Engenharia</p>
+                <h1 className="text-gray-900">
+                  Sistema de Gestão - Laboratório de Concreto
+                </h1>
+                <p className="text-gray-600 text-sm">
+                  Controle de Corpos de Prova e Ensaios - Model Engenharia
+                </p>
               </div>
             </div>
-            
+
             {/* Menu do Usuário */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -161,14 +192,19 @@ function AppContent() {
                   </div>
                   <div className="text-left hidden md:block">
                     <p className="text-sm font-medium">{user?.name}</p>
-                    <p className="text-xs text-muted-foreground">{user?.username}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user?.username}
+                    </p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600 cursor-pointer"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sair
                 </DropdownMenuItem>
@@ -179,8 +215,16 @@ function AppContent() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className={`grid w-full max-w-5xl ${user?.role === 'admin' ? 'grid-cols-7' : 'grid-cols-6'}`}>
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList
+            className={`grid w-full max-w-5xl ${
+              user?.role === "admin" ? "grid-cols-7" : "grid-cols-6"
+            }`}
+          >
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <ClipboardCheck className="w-4 h-4" />
               Dashboard
@@ -205,7 +249,7 @@ function AppContent() {
               <FileText className="w-4 h-4" />
               Relatórios
             </TabsTrigger>
-            {user?.role === 'admin' && (
+            {user?.role === "admin" && (
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 Usuários
@@ -237,7 +281,7 @@ function AppContent() {
             <ReportsManager />
           </TabsContent>
 
-          {user?.role === 'admin' && (
+          {user?.role === "admin" && (
             <TabsContent value="users" className="space-y-4">
               <UsersManager />
             </TabsContent>
@@ -251,12 +295,15 @@ function AppContent() {
 function AppWithAuth() {
   const { isAuthenticated, login } = useAuth();
 
-  const handleLogin = async (username: string, password: string): Promise<boolean> => {
+  const handleLogin = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
     const success = await login(username, password);
     if (success) {
-      toast.success('Login realizado com sucesso!');
+      toast.success("Login realizado com sucesso!");
     } else {
-      toast.error('Usuário ou senha incorretos');
+      toast.error("Usuário ou senha incorretos");
     }
     return success;
   };

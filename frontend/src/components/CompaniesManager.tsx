@@ -1,14 +1,35 @@
-import { useState } from 'react';
-import { Company } from '../hooks/useApiStorage';
-import { toast } from 'sonner';
-import { useData } from '../contexts/DataContext';
-import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Plus, Pencil, Trash2} from 'lucide-react';
+import { useState } from "react";
+import { Company } from "../hooks/useApiStorage";
+import { toast } from "sonner";
+import { useData } from "../contexts/DataContext";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 
 export function CompaniesManager() {
   const { companies, createCompany, updateCompany, deleteCompany } = useData();
@@ -16,20 +37,20 @@ export function CompaniesManager() {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    nome: '',
-    cnpj: '',
-    endereco: '',
-    email: '',
-    telefone: '',
+    nome: "",
+    cnpj: "",
+    endereco: "",
+    email: "",
+    telefone: "",
   });
 
   const resetForm = () => {
     setFormData({
-      nome: '',
-      cnpj: '',
-      endereco: '',
-      email: '',
-      telefone: '',
+      nome: "",
+      cnpj: "",
+      endereco: "",
+      email: "",
+      telefone: "",
     });
     setEditingCompany(null);
   };
@@ -37,22 +58,21 @@ export function CompaniesManager() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       if (editingCompany) {
-        console.log('📝 Editando empresa:', editingCompany.id);
+        console.log("📝 Editando empresa:", editingCompany.id);
         await updateCompany(editingCompany.id, formData);
       } else {
-        console.log('➕ Criando nova empresa com dados:', formData);
+        console.log("➕ Criando nova empresa com dados:", formData);
         const created = await createCompany(formData);
-        console.log('✅ Empresa criada e retornada:', created);
+        console.log("✅ Empresa criada e retornada:", created);
       }
-      
+
       setIsDialogOpen(false);
       resetForm();
     } catch (error) {
-      console.error('❌ Erro no handleSubmit:', error);
-      // Error is already handled in useApiStorage with toast
+      console.error("❌ Erro no handleSubmit:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -62,22 +82,20 @@ export function CompaniesManager() {
     setEditingCompany(company);
     setFormData({
       nome: company.nome,
-      cnpj: company.cnpj || '',
-      endereco: company.endereco || '',
-      email: company.email || '',
-      telefone: company.telefone || '',
+      cnpj: company.cnpj || "",
+      endereco: company.endereco || "",
+      email: company.email || "",
+      telefone: company.telefone || "",
     });
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta empresa?')) {
+    if (confirm("Tem certeza que deseja excluir esta empresa?")) {
       try {
         await deleteCompany(id);
-        toast.success('Empresa excluída com sucesso!');
-      } catch (error) {
-        // Error is already handled in useApiStorage with toast
-      }
+        toast.success("Empresa excluída com sucesso!");
+      } catch (error) {}
     }
   };
 
@@ -87,12 +105,17 @@ export function CompaniesManager() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Cadastro de Empresas</CardTitle>
-            <CardDescription>Gerencie as empresas clientes do laboratório</CardDescription>
+            <CardDescription>
+              Gerencie as empresas clientes do laboratório
+            </CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open: boolean) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}
+          >
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
@@ -102,7 +125,7 @@ export function CompaniesManager() {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
-                  {editingCompany ? 'Editar Empresa' : 'Nova Empresa'}
+                  {editingCompany ? "Editar Empresa" : "Nova Empresa"}
                 </DialogTitle>
                 <DialogDescription>
                   Preencha os dados da empresa
@@ -115,7 +138,9 @@ export function CompaniesManager() {
                     <Input
                       id="nome"
                       value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nome: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -125,7 +150,9 @@ export function CompaniesManager() {
                       <Input
                         id="cnpj"
                         value={formData.cnpj}
-                        onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cnpj: e.target.value })
+                        }
                         placeholder="00.000.000/0000-00"
                       />
                     </div>
@@ -134,7 +161,9 @@ export function CompaniesManager() {
                       <Input
                         id="telefone"
                         value={formData.telefone}
-                        onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, telefone: e.target.value })
+                        }
                         placeholder="(00) 00000-0000"
                       />
                     </div>
@@ -144,7 +173,9 @@ export function CompaniesManager() {
                     <Input
                       id="endereco"
                       value={formData.endereco}
-                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, endereco: e.target.value })
+                      }
                     />
                   </div>
                   <div className="grid gap-2">
@@ -153,13 +184,19 @@ export function CompaniesManager() {
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                     />
                   </div>
                 </div>
                 <DialogFooter>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Salvando...' : editingCompany ? 'Atualizar' : 'Cadastrar'}
+                    {isSubmitting
+                      ? "Salvando..."
+                      : editingCompany
+                      ? "Atualizar"
+                      : "Cadastrar"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -188,10 +225,10 @@ export function CompaniesManager() {
               {companies.map((company) => (
                 <TableRow key={company.id}>
                   <TableCell>{company.nome}</TableCell>
-                  <TableCell>{company.cnpj || '-'}</TableCell>
-                  <TableCell>{company.endereco || '-'}</TableCell>
-                  <TableCell>{company.email || '-'}</TableCell>
-                  <TableCell>{company.telefone || '-'}</TableCell>
+                  <TableCell>{company.cnpj || "-"}</TableCell>
+                  <TableCell>{company.endereco || "-"}</TableCell>
+                  <TableCell>{company.email || "-"}</TableCell>
+                  <TableCell>{company.telefone || "-"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
                       <Button

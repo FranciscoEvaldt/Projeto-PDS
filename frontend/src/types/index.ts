@@ -1,11 +1,3 @@
-// ============================================
-// INTERFACES BASEADAS NO SCHEMA SQL
-// Sistema de Gestão de Laboratório de Concreto
-// ============================================
-
-// ============================================
-// COMPANY (Empresa)
-// ============================================
 export interface Company {
   id: number;
   nome: string;
@@ -18,10 +10,6 @@ export interface Company {
   created_by?: number;
   updated_by?: number;
 }
-
-// ============================================
-// WORK (Obra)
-// ============================================
 export interface Work {
   id: number;
   empresa_id: number;
@@ -41,9 +29,6 @@ export interface Work {
   updated_by?: number;
 }
 
-// ============================================
-// LOAD (Carga/Planilha)
-// ============================================
 export interface Load {
   id: number;
   obra_id: number;
@@ -64,9 +49,6 @@ export interface Load {
   updated_by?: number;
 }
 
-// ============================================
-// SAMPLE (Amostra/Corpo de Prova)
-// ============================================
 export interface Sample {
   id: number;
   carga_id: number;
@@ -79,16 +61,13 @@ export interface Sample {
   altura_mm?: number;
   carga_kn?: number;
   resistencia_mpa?: number;
-  status?: 'pending' | 'tested' | 'cancelled';
+  status?: "pending" | "tested" | "cancelled";
   created_at?: string;
   updated_at?: string;
   created_by?: number;
   updated_by?: number;
 }
 
-// ============================================
-// SYSTEM COUNTER
-// ============================================
 export interface SystemCounter {
   id: number;
   counter_name: string;
@@ -96,24 +75,18 @@ export interface SystemCounter {
   updated_at?: string;
 }
 
-// ============================================
-// USER (Usuário)
-// ============================================
 export interface User {
   id: number;
   nome: string;
   email: string;
   senha?: string; // Não retornado nas queries normais
-  role?: 'admin' | 'manager' | 'user' | 'viewer';
+  role?: "admin" | "manager" | "user" | "viewer";
   ativo?: boolean;
   ultimo_acesso?: string;
   created_at?: string;
   updated_at?: string;
 }
 
-// ============================================
-// VIEWS
-// ============================================
 export interface SampleComplete extends Sample {
   obra_id: number;
   numero_planilha: number;
@@ -125,7 +98,6 @@ export interface SampleComplete extends Sample {
   empresa_id: number;
   empresa_nome: string;
 }
-
 export interface WorkStatistics {
   id: number;
   nome: string;
@@ -137,9 +109,6 @@ export interface WorkStatistics {
   resistencia_media?: number;
 }
 
-// ============================================
-// FORM DATA
-// ============================================
 export interface CompanyFormData {
   nome: string;
   cnpj?: string;
@@ -185,90 +154,94 @@ export interface SampleFormData {
   altura_mm?: number;
   carga_kn?: number;
   resistencia_mpa?: number;
-  status?: 'pending' | 'tested' | 'cancelled';
+  status?: "pending" | "tested" | "cancelled";
 }
 
-// ============================================
-// HELPERS E UTILIDADES
-// ============================================
-
-/**
- * Estados do Brasil
- */
 export const ESTADOS_BRASIL = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
 ];
 
-/**
- * Calcular próximo número de planilha para uma obra
- */
 export function getNextPlanilhaNumber(loads: Load[], obraId: number): number {
-  const obraLoads = loads.filter(l => l.obra_id === obraId);
+  const obraLoads = loads.filter((l) => l.obra_id === obraId);
   if (obraLoads.length === 0) return 1;
-  
-  const maxNumber = Math.max(...obraLoads.map(l => l.numero_planilha));
+
+  const maxNumber = Math.max(...obraLoads.map((l) => l.numero_planilha));
   return maxNumber + 1;
 }
 
-/**
- * Calcular data de rompimento
- */
-export function calcularDataRompimento(dataMoldagem: string, idadeDias: number): string {
+export function calcularDataRompimento(
+  dataMoldagem: string,
+  idadeDias: number
+): string {
   const data = new Date(dataMoldagem);
   data.setDate(data.getDate() + idadeDias);
-  return data.toISOString().split('T')[0];
+  return data.toISOString().split("T")[0];
 }
 
-/**
- * Formatar data para padrão brasileiro
- */
 export function formatDateBR(dateStr?: string): string {
-  if (!dateStr) return '-';
-  const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('pt-BR');
+  if (!dateStr) return "-";
+  const date = new Date(dateStr + "T00:00:00");
+  return date.toLocaleDateString("pt-BR");
 }
 
-/**
- * Adicionar dias a uma data
- */
 export function addDaysToDate(dateStr: string, days: number): string {
-  const date = new Date(dateStr + 'T00:00:00');
+  const date = new Date(dateStr + "T00:00:00");
   date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
+  return date.toISOString().split("T")[0];
 }
 
-/**
- * Gerar código de amostra
- * Formato: OB001-PL001-C01-A001
- */
 export function gerarCodigoAmostra(
   obraId: number,
   numeroPlanilha: number,
   cargaSequencia: number,
   amostraSequencia: number
 ): string {
-  const obra = String(obraId).padStart(3, '0');
-  const planilha = String(numeroPlanilha).padStart(3, '0');
-  const carga = String(cargaSequencia).padStart(2, '0');
-  const amostra = String(amostraSequencia).padStart(3, '0');
-  
+  const obra = String(obraId).padStart(3, "0");
+  const planilha = String(numeroPlanilha).padStart(3, "0");
+  const carga = String(cargaSequencia).padStart(2, "0");
+  const amostra = String(amostraSequencia).padStart(3, "0");
+
   return `OB${obra}-PL${planilha}-C${carga}-A${amostra}`;
 }
 
-/**
- * Calcular percentual em relação ao FCK
- */
-export function calcularPercentualFck(resistenciaMpa: number, fckMpa: number): number {
+export function calcularPercentualFck(
+  resistenciaMpa: number,
+  fckMpa: number
+): number {
   if (!fckMpa || fckMpa === 0) return 0;
   return Number(((resistenciaMpa / fckMpa) * 100).toFixed(2));
 }
 
-/**
- * Verificar conformidade
- */
-export function verificarConformidade(resistenciaMpa: number, fckMpa: number): boolean {
+export function verificarConformidade(
+  resistenciaMpa: number,
+  fckMpa: number
+): boolean {
   if (!fckMpa || !resistenciaMpa) return false;
   return resistenciaMpa >= fckMpa;
 }
