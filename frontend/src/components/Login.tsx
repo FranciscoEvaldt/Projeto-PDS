@@ -123,24 +123,6 @@ export function Login({ onLogin }: LoginProps) {
               </Button>
             </form>
 
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-              <p className="text-sm text-blue-800 mb-2">
-                <strong>🔐 Credenciais de Acesso:</strong>
-              </p>
-              <div className="space-y-1 text-xs text-blue-700">
-                <p>
-                  <strong>Usuário:</strong>{" "}
-                  <code className="bg-blue-100 px-2 py-0.5 rounded">admin</code>
-                </p>
-                <p>
-                  <strong>Senha:</strong>{" "}
-                  <code className="bg-blue-100 px-2 py-0.5 rounded">
-                    admin123
-                  </code>
-                </p>
-              </div>
-            </div>
-
             {error && (
               <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-lg animate-shake">
                 <div className="flex items-start gap-3">
