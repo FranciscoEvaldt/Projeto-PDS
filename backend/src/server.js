@@ -63,24 +63,13 @@ async function startServer() {
   try {
     const connected = await testConnection();
 
-    if (!connected) {
-      console.error(
-        "❌ Não foi possível conectar ao banco de dados. Verifique as configurações no arquivo .env"
-      );
-      console.error("");
-      console.error(
-        "Crie um arquivo .env na pasta backend com o seguinte conteúdo:"
-      );
-      console.error("");
-      console.error("DB_HOST=localhost");
-      console.error("DB_PORT=5432");
-      console.error("DB_NAME=lab_concreto");
-      console.error("DB_USER=postgres");
-      console.error("DB_PASSWORD=sua_senha");
-      console.error("PORT=3001");
-      console.error("");
-      process.exit(1);
-    }
+   if (!connected) {
+  console.error("❌ Não foi possível conectar ao banco de dados.");
+  console.error("   → Verifique se a variável DATABASE_URL está configurada no Render.");
+  console.error("   → Verifique se a senha do banco está correta.");
+  process.exit(1);
+}
+
 
     app.listen(PORT, () => {
       console.log("");
