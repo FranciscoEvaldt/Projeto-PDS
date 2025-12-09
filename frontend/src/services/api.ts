@@ -13,7 +13,7 @@ export interface AuthResponse {
   role: "admin" | "user";
 }
 
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = "https://projeto-pds-uys3.onrender.com/api";
 
 export const getApiBaseUrl = () => API_BASE_URL;
 
